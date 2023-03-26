@@ -50,7 +50,9 @@ ar_params_1 = simulation_1[1]
 # Plot the histogram of the Test-Statistic.
 fig, ax = plt.subplots(figsize=(15, 10))
 ax.hist(ar_params_1['DF_TS'], bins=50)
-ax.set_title('Critical Value distribution for N: ' + str(N))
+ax.set_title('Test Statistic Distribution for N: ' + str(N))
+plt.xlabel('Test Statistic')
+plt.ylabel('Frequency')
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_Critical_Value_Histogram.png'))
 plt.close()
