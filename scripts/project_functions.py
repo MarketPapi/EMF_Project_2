@@ -123,11 +123,26 @@ def critical_value(df, column, T, N):
         trend_std = ar_model.bse[0]
 
         # Step 4: Compute the T-Statistic
-        test_stat = (phi_hat - 1) / phi_std
+        df_stat = (phi_hat - 1) / phi_std
 
-        ar_parameters.loc[i] = [phi_hat, phi_std, trend, trend_std, test_stat]
+        ar_parameters.loc[i] = [phi_hat, phi_std, trend, trend_std, df_stat]
     # Computing the critical values
+
     test_statistics = ar_parameters['DF_TS'].quantile([0.01, 0.05, 0.1])
-    test_statistics.columns = ['T-Statistic']
+    test_statistics = test_statistics.rename('T-Statistic')
 
     return test_statistics, ar_parameters
+
+
+def get_pvalue(distribution, value):
+    """
+    Given the distribution of t-stats and the observed value it return the quantile
+    to which the value corresponds.
+    :param distribution: array of the distribution values
+    :param value: Observed value
+    :return: Quantile (p_value)
+    """
+    quantiles = np.percentile(distribution, np.arange(0, 100, 1))
+    index = np.searchsorted(quantiles, value)
+    quantile = (index / 100.0)
+    return quantile

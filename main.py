@@ -10,8 +10,6 @@ import warnings
 # Ignore warnings
 warnings.filterwarnings('ignore')
 
-# Set plot style
-plt.style.use('fivethirtyeight')
 
 # Importing the commodities data
 df_data = pf.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
@@ -54,13 +52,27 @@ ax.set_title('Test Statistic Distribution for N: ' + str(N))
 plt.xlabel('Test Statistic')
 plt.ylabel('Frequency')
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_Critical_Value_Histogram.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_T-Stat Distribution.png'))
 plt.close()
 
 # *** Question 1.5 ***
 # Compute the critical values of the DF test.
 critical_values_1 = simulation_1[0]
 critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_Critical_Values.tex'), float_format="%.2f")
+
+# Plot the histogram of the Test-Statistic and Critical Values.
+fig, ax = plt.subplots(figsize=(15, 10))
+ax.hist(ar_params_1['DF_TS'], bins=50, edgecolor='black')
+ax.set_title('Test Statistic Distribution for N: ' + str(N))
+plt.xlabel('Test Statistic')
+plt.ylabel('Frequency')
+plt.axvline(x=critical_values_1.loc[0.01], color='r', label='CV 1%')
+plt.axvline(x=critical_values_1.loc[0.05], color='y', label='CV 5%')
+plt.axvline(x=critical_values_1.loc[0.10], color='g', label='CV 10%')
+plt.legend()
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat Distribution with CV'))
+plt.close()
 
 # *** Question 1.6 ***
 # Re-computing the simulation for T=500.
@@ -74,8 +86,8 @@ critical_values_2 = simulation_2[0]
 
 # *** Question 1.7 ***
 # Computing the DF Test.
-DF_Test = pd.DataFrame(index=['DF_TS', 'CV 1%', 'CV 5%', 'CV 10%', 'Reject H0 1%', 'Reject H0 5%', 'Reject H0 10%'],
-                       columns=l_adj_close_price)
+DF_Test = pd.DataFrame(index=['DF_TS', 'CV 1%', 'CV 5%', 'CV 10%', 'Reject H0 1%', 'Reject H0 5%', 'Reject H0 10%',
+                              'p_value'], columns=l_adj_close_price)
 
 for col in l_adj_close_price:
     t_stat_data = pf.reg(df_data_ln, col, lag=1)
@@ -87,9 +99,14 @@ for col in l_adj_close_price:
     DF_Test.loc['Reject H0 1%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 1%'][col])
     DF_Test.loc['Reject H0 5%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 5%'][col])
     DF_Test.loc['Reject H0 10%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 10%'][col])
-    # TODO: Compute the p-value of the distribution
+    DF_Test.loc['p_value'][col] = pf.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
 
 DF_Test.columns = ['ZC', 'ZW', 'ZS', 'KC', 'CC']
+
+
+
+
+
 
 # *** Question 1.8 ***
 
