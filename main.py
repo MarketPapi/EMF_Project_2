@@ -87,10 +87,11 @@ critical_values_2 = simulation_2[0]
 # *** Question 1.7 ***
 # Computing the DF Test.
 DF_Test = pd.DataFrame(index=['DF_TS', 'CV 1%', 'CV 5%', 'CV 10%', 'Reject H0 1%', 'Reject H0 5%', 'Reject H0 10%',
-                              'p_value'], columns=l_adj_close_price)
+                              'P_Value'], columns=l_adj_close_price)
 
 for col in l_adj_close_price:
     t_stat_data = pf.reg(df_data_ln, col, lag=1)
+    #TODO: Decide whether to use AR or OLS for model.
 
     DF_Test.loc['DF_TS'][col] = t_stat_data
     DF_Test.loc['CV 1%'][col] = critical_values_1.loc[0.01]
@@ -99,13 +100,11 @@ for col in l_adj_close_price:
     DF_Test.loc['Reject H0 1%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 1%'][col])
     DF_Test.loc['Reject H0 5%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 5%'][col])
     DF_Test.loc['Reject H0 10%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 10%'][col])
-    DF_Test.loc['p_value'][col] = pf.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
+    DF_Test.loc['P_Value'][col] = pf.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
 
 DF_Test.columns = ['ZC', 'ZW', 'ZS', 'KC', 'CC']
-
-
-
-
+DF_Test = pf.format_float(DF_Test)
+DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 
 
 # *** Question 1.8 ***

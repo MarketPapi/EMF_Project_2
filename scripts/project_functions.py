@@ -65,17 +65,18 @@ def reg(df, column, lag=0):
 
     # New DataFrame
     new_df = pd.DataFrame(df[column].copy())
-
-    # Creating lagged feature
-    new_df['Lagged'] = new_df[column].shift(lag)
-    new_df.dropna(inplace=True)
-
-    X = new_df['Lagged'].values
+    #
+    # # Creating lagged feature
+    # new_df['Lagged'] = new_df[column].shift(lag)
+    # new_df.dropna(inplace=True)
+    #
+    # X = new_df['Lagged'].values
     y = new_df[column].values
 
     # Run linear regression
-    X = sm.add_constant(X)
-    model = sm.OLS(y, X)
+    # X = sm.add_constant(X)
+    # model = sm.OLS(y, X)
+    model = AutoReg(y, lags=lag, trend='c')
     reg_results = model.fit()
 
     # Computing the T-Stat from the regression parameters
@@ -126,12 +127,12 @@ def critical_value(df, column, T, N):
         df_stat = (phi_hat - 1) / phi_std
 
         ar_parameters.loc[i] = [phi_hat, phi_std, trend, trend_std, df_stat]
+
     # Computing the critical values
+    critical_val = ar_parameters['DF_TS'].quantile([0.01, 0.05, 0.1])
+    critical_val = critical_val.rename('Critical Value')
 
-    test_statistics = ar_parameters['DF_TS'].quantile([0.01, 0.05, 0.1])
-    test_statistics = test_statistics.rename('T-Statistic')
-
-    return test_statistics, ar_parameters
+    return critical_val, ar_parameters
 
 
 def get_pvalue(distribution, value):
@@ -146,3 +147,12 @@ def get_pvalue(distribution, value):
     index = np.searchsorted(quantiles, value)
     quantile = (index / 100.0)
     return quantile
+
+
+def format_float(df):
+    """
+    Format the floats to two decimal places in :param df: DataFrame
+    :return: Formatted DataFrame
+    """
+    df = df.applymap(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) else x)
+    return df
