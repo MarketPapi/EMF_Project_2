@@ -9,6 +9,8 @@ from pathlib import Path
 from scripts.project_parameters import paths
 import statsmodels.api as sm
 from statsmodels.tsa.ar_model import AutoReg
+from tqdm import tqdm
+from itertools import permutations
 
 
 def read_data(file_path, skiprows=0):
@@ -65,18 +67,17 @@ def reg(df, column, lag=0):
 
     # New DataFrame
     new_df = pd.DataFrame(df[column].copy())
-    #
-    # # Creating lagged feature
-    # new_df['Lagged'] = new_df[column].shift(lag)
-    # new_df.dropna(inplace=True)
-    #
-    # X = new_df['Lagged'].values
+
+    # Creating lagged feature
+    new_df['Lagged'] = new_df[column].shift(lag)
+    new_df.dropna(inplace=True)
+
+    X = new_df['Lagged'].values
     y = new_df[column].values
 
     # Run linear regression
-    # X = sm.add_constant(X)
-    # model = sm.OLS(y, X)
-    model = AutoReg(y, lags=lag, trend='c')
+    X = sm.add_constant(X)
+    model = sm.OLS(y, X)
     reg_results = model.fit()
 
     # Computing the T-Stat from the regression parameters
@@ -103,30 +104,25 @@ def critical_value(df, column, T, N):
     white_noise = np.random.normal(0, 1, size=(T, N))
 
     # Output DataFrame
-    ar_parameters = pd.DataFrame(columns=['AR_Coeff', 'AR_Coeff_SD', 'Trend_Coeff', 'Trend_Coeff_SD', 'DF_TS'])
+    ar_parameters = pd.DataFrame(columns=['AR_Coeff', 'AR_Coeff_SD', 'DF_TS'])
 
     # Select P(0)
     p0 = df[column][0]
-    p = np.zeros((T, N))
-    p[0] = p0
+    white_noise[0] = p0
 
-    for i in range(0, N):
+    # Aggregate the shocks
+    white_noise_agg = white_noise.cumsum(axis=0)
 
-        # Step 2: Compute Random Walk
-        for t in range(1, T):
-            p[t, i] = p[t - 1, i] + white_noise[t, i]
-
+    for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
         # Step 3: Estimate AR(1) Model
-        ar_model = AutoReg(p[:, i], lags=1, trend='c').fit()
+        ar_model = AutoReg(white_noise_agg[:, i], lags=1, trend='c').fit()
         phi_hat = ar_model.params[1]
         phi_std = ar_model.bse[1]
-        trend = ar_model.params[0]
-        trend_std = ar_model.bse[0]
 
         # Step 4: Compute the T-Statistic
         df_stat = (phi_hat - 1) / phi_std
 
-        ar_parameters.loc[i] = [phi_hat, phi_std, trend, trend_std, df_stat]
+        ar_parameters.loc[i] = [phi_hat, phi_std, df_stat]
 
     # Computing the critical values
     critical_val = ar_parameters['DF_TS'].quantile([0.01, 0.05, 0.1])
@@ -154,5 +150,102 @@ def format_float(df):
     Format the floats to two decimal places in :param df: DataFrame
     :return: Formatted DataFrame
     """
-    df = df.applymap(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) else x)
-    return df
+    df_new = df.copy()
+    df_new = df_new.applymap(lambda x: '{:.2f}'.format(x) if isinstance(x, (int, float)) else x)
+    return df_new
+
+
+def cointgration(df):
+    """
+    Running a regression of log-prices on combinations of assets.
+
+    :param df: DataFrame with log prices.
+    :return: DataFrame with alpha, beta and DF Test-Statistic.
+    """
+
+    cols = list(df.columns)
+    combos = list(permutations(range(len(cols)), 2))
+
+    comm_names = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
+    comm_coint = pd.DataFrame(index=['Alpha', 'Beta', 'DF_TS'])
+
+    for i, j in combos:
+        comm_name = str(comm_names[i]) + '-' + str(comm_names[j])
+
+        # Regression between contemporaneous log-prices.
+        # Regressing i on j
+        asset1 = df.iloc[:, i]
+        asset2 = df.iloc[:, j]
+        model_1 = sm.OLS(asset1, sm.add_constant(asset2)).fit()
+        alpha = model_1.params['const']
+        beta = model_1.params[1]
+
+        # Residuals
+        resid = pd.Series(model_1.resid)
+        resid_lagged = resid.shift(1)
+        resid_lagged.dropna(inplace=True)
+        resid_fd = pd.Series(resid - resid_lagged)
+        resid_fd.dropna(inplace=True)
+
+        # 2nd Regression
+        model_2 = sm.OLS(resid_fd, sm.add_constant(resid_lagged)).fit()
+
+        # Output DF_Test
+        phi_minus_1 = model_2.params[0]
+        phi_std = model_2.bse[0]
+        tstat = phi_minus_1 / phi_std
+
+        # Arrange into DataFrame
+        comm_coint[comm_name] = [alpha, beta, tstat]
+
+    return comm_coint.T
+
+def simulate_coint_cv(T,N):
+    """
+    Simulate test statistics.
+    :param T: Time series length.
+    :param N: Number of simulations
+    :return: list of test statistics.
+    """
+
+    np.random.seed(23031998)
+    white_noise_A = np.random.normal(0, 1, size=(T, N))
+    white_noise_A[0] = 0
+    white_noise_A_agg = white_noise_A.cumsum(axis=0)
+
+    np.random.seed(23031999)
+    white_noise_B = np.random.normal(0, 1, size=(T, N))
+    white_noise_B[0] = 0
+    white_noise_B_agg = white_noise_B.cumsum(axis=0)
+
+    pA = white_noise_A_agg
+    pB = white_noise_B_agg
+
+    tstat = []
+
+    for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
+
+        # Regress pA on pB
+        model_1 = sm.OLS(pA[:, i], sm.add_constant(pB[:, i])).fit()
+
+        # Extract residuals
+        resid = pd.Series(model_1.resid)
+
+        # Compute lagged residuals
+        resid_shifted = resid.shift(1)
+        resid_shifted.dropna(inplace=True)
+
+        #Compute first difference
+        resid_diff = pd.Series(resid - resid_shifted)
+        resid_diff.dropna(inplace=True)
+
+        # Regress first difference on lagged residual
+        model_2 = sm.OLS(resid_diff, sm.add_constant(resid_shifted)).fit()
+
+        # Compute DF_Tstat
+        tstat_calc = model_2.params[0] / model_2.bse[0]
+
+        #Append to list
+        tstat.append(tstat_calc)
+
+    return tstat
