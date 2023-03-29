@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 import scripts.project_functions as pf
 from pathlib import Path
@@ -37,7 +38,6 @@ df_data_ln = pf.log_transform_cols(df_data, l_adj_close_price)
 # **************************************************
 # *** 1.1: Critical Values                       ***
 # **************************************************
-
 
 # Initialisation
 T = len(df_data_ln.index)
@@ -103,7 +103,6 @@ for col in l_adj_close_price:
     DF_Test.loc['Reject H0 5%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 5%'][col])
     DF_Test.loc['Reject H0 10%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 10%'][col])
     DF_Test.loc['P_Value'][col] = pf.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
-    # TODO: Check with group that p-value calculation is correct
 
 DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
 DF_Test = pf.format_float(DF_Test)
@@ -143,7 +142,7 @@ plt.axvline(x=cv_coint.loc[0.05], color='y', label='CV 5%')
 plt.axvline(x=cv_coint.loc[0.10], color='g', label='CV 10%')
 plt.legend()
 plt.show()
-# TODO: Save plot
+fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat_Distribution_Coint'))
 plt.close()
 
 # %%
@@ -151,56 +150,57 @@ plt.close()
 # *** 2.2: Testing for Cointegration             ***
 # **************************************************
 
+# Cointegration results DataFrame, needed to construct another cointegration test statistics DataFrame
 df_coint = pf.cointgration(df_data_ln)
-# TODO: Save output to Latex file
-
 
 # *** Question 2.2 ***
-test = pd.DataFrame(index=df_coint.index,
-                    columns=['DF_TS', 'CV_1%', 'CV_5%', 'CV_10%', 'P_Value', 'Reject H0 1%', 'Reject H0 5%',
-                             'Reject H0 10%'])
+coint_test = pd.DataFrame(index=df_coint.index,
+                          columns=['DF_TS', 'CV_1%', 'CV_5%', 'CV_10%', 'P_Value', 'Reject H0 1%', 'Reject H0 5%',
+                                   'Reject H0 10%'])
 for index in df_coint.index:
-    test.loc[index]['DF_TS'] = df_coint.loc[index]['DF_TS']
-    test.loc[index]['CV_1%'] = cv_coint.loc[0.01]
-    test.loc[index]['CV_5%'] = cv_coint.loc[0.05]
-    test.loc[index]['CV_10%'] = cv_coint.loc[0.1]
-    test.loc[index]['P_Value'] = pf.get_pvalue(t_stat_coint, df_coint.loc[index]['DF_TS'])
-    # TODO: Check p-value calculation
-    test.loc[index]['Reject H0 1%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.01])
-    test.loc[index]['Reject H0 5%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.05])
-    test.loc[index]['Reject H0 10%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.1])
+    coint_test.loc[index]['DF_TS'] = df_coint.loc[index]['DF_TS']
+    coint_test.loc[index]['CV_1%'] = cv_coint.loc[0.01]
+    coint_test.loc[index]['CV_5%'] = cv_coint.loc[0.05]
+    coint_test.loc[index]['CV_10%'] = cv_coint.loc[0.1]
+    coint_test.loc[index]['P_Value'] = pf.get_pvalue(t_stat_coint, df_coint.loc[index]['DF_TS'])
+    coint_test.loc[index]['Reject H0 1%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.01])
+    coint_test.loc[index]['Reject H0 5%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.05])
+    coint_test.loc[index]['Reject H0 10%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.1])
 
-test = pf.format_float(test)
-# TODO: Rename DataFrame
-
+coint_test_out = pf.format_float(coint_test)
+coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
 
 # *** Question 2.3 ***
-# df_coint[['Alpha','Beta']]
-# TODO: Save data frame to Latex
+
+df_coint_out = pf.format_float(df_coint[['Alpha', 'Beta']])
+df_coint_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.3_A_B_Values.tex'))
 
 # *** Question 2.4 ***
 
 
 # *** Question 2.5 ***
-pA = df_data_ln['ZC Adj Close']
-alpha = df_coint.loc['Corn-Wheat']['Alpha']
-beta = df_coint.loc['Corn-Wheat']['Beta']
-pB = df_data_ln['ZW Adj Close']
+pA = df_data_ln['ZW Adj Close']
+alpha = df_coint.loc['Wheat-Corn']['Alpha']
+beta = df_coint.loc['Wheat-Corn']['Beta']
+pB = df_data_ln['ZC Adj Close']
 comb = alpha + beta * pB
 
-# TODO: Double check that this is the most cointegrated asset pair.
 # Plot PA and Linear combination
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pA, label='Corn')
-ax.plot(comb.index, comb, label='alpha + beta * Price B')
+ax.plot(pd.to_datetime(pA.index), pA, label='Wheat')
+ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)')
+year_locator = mdates.YearLocator()
+year_formatter = mdates.DateFormatter('%Y')
+ax.xaxis.set_major_locator(year_locator)
+ax.xaxis.set_major_formatter(year_formatter)
 ax.set_xlabel('Time')
 ax.set_ylabel('Log Price')
+ax.set_title('Wheat-Corn Pair')
 ax.legend()
 plt.show()
-# TODO: Save figure
+fig.autofmt_xdate()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
-
-
 
 
 # %%
