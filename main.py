@@ -133,7 +133,7 @@ cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
 cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format="%.2f")
-print('Test')
+
 
 # Plotting Histogram of critical values.
 fig, ax = plt.subplots(figsize=(15, 10))
