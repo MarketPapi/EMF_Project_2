@@ -1,5 +1,6 @@
 from pathlib import Path
 from scripts.project_parameters import paths
+from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
 from tqdm import tqdm
@@ -9,7 +10,10 @@ import numpy as np
 import pandas as pd
 import scripts.project_functions as pf
 import statsmodels.api as sm
+import warnings
 
+# Suppress warnings
+warnings.filterwarnings("ignore")
 
 # %%
 # **************************************************
@@ -206,9 +210,45 @@ plt.close()
 # **************************************************
 
 # *** Question 3.1 ***
-# *** Question 3.2 ***
-# *** Question 3.3 ***
+"""
+Model: P_t^{A} = a + b*P_t^{B} + z_t
+Conclusion: as long as cointegration relation holds, we should expect z_t = 0, so no trading signal
+Arbitrage: z_t >> 0 ==> P_t^{A} - (a + b*P_t^{B}) >> 0 we have that the price of A is significantly above the cointegrated
+price of A ==> we expect P_t^{A} to back to the cointegrated price, so we short A and use the proceeds to long B, and we
+make a profit as long as the two prices converge back to cointegrated price
+Strategy: z_t >> 0 ==> short A, long B; z_t << 0 ==> short B, long A
+"""
 
+# *** Question 3.2 ***
+# Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close)
+
+df_signals = df_data[['ZW Adj Close', 'ZC Adj Close']]
+
+lr_model = LinearRegression()
+X = df_signals[['ZC Adj Close']]
+y = df_signals['ZW Adj Close']
+lr_model.fit(X, y)
+df_signals['Coint ZW'] = lr_model.predict(X)
+df_signals['Signal (z_t)'] = df_signals['ZW Adj Close'] - df_signals['Coint ZW']
+df_signals['Norm Signal'] = df_signals['Signal (z_t)'] / df_signals['Signal (z_t)'].std(ddof=0)
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(pd.to_datetime(df_signals.index), df_signals['Norm Signal'], label='Normal Sign', c='red')
+year_locator = mdates.YearLocator()
+year_formatter = mdates.DateFormatter('%Y')
+ax.xaxis.set_major_locator(year_locator)
+ax.xaxis.set_major_formatter(year_formatter)
+ax.set_title('Wheat-Corn Pair')
+ax.legend()
+plt.show()
+fig.autofmt_xdate()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Signals.png'))
+plt.close()
+
+# *** Question 3.3 ***
+# TODO: signals ==> get signals
+# TODO: correlogram ==> plot correlogram
+# TODO: Ljung Box test ==> lb test
 
 # %%
 # **************************************************
@@ -245,3 +285,19 @@ plt.close()
 # *** Question 3.11 ***
 # *** Question 3.12 ***
 # *** Question 3.13 ***
+
+
+rand_values = np.random.rand(100000)
+
+s = pd.Series(np.zeros(100000))
+for i in range(1, 100000):
+    s[i] += 1*s[i-1] + rand_values[i]
+
+model_1 = AutoReg(s,lags=1, trend="n").fit()
+phi = model_1.params[0]
+test = (phi-1) / model_1.bse[0]
+
+
+X = sm.add_constant(X)
+    model = sm.OLS(y, X)
+    reg_results = model.fit()
