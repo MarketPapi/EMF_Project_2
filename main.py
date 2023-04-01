@@ -1,43 +1,33 @@
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import pandas as pd
-import scripts.project_functions as pf
 from pathlib import Path
 from scripts.project_parameters import paths
-import numpy as np
-import warnings
-import scipy
-import statsmodels.api as sm
-from tqdm import tqdm
-
-from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.stattools import adfuller
+from tqdm import tqdm
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scripts.project_functions as pf
+import statsmodels.api as sm
 
-# Ignore warnings
-warnings.filterwarnings('ignore')
 
-# Importing the commodities data
+# %%
+# **************************************************
+# *** QUESTION 1: Stationarity                   ***
+# **************************************************
+
+# Importing dataset (commodities)
 df_data = pf.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
 
-# Taking Logarithm of the adjusted close price
+# Taking logarithm of the adjusted close price
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 df_data_ln = pf.log_transform_cols(df_data, l_adj_close_price)
 
-# %%
-# **************************************************
-# *** 1: Stationarity                            ***
-# **************************************************
-
-# *** Question 1.1  ***
-
-
-# *** Question 1.2  ***#
-
 
 # %%
 # **************************************************
-# *** 1.1: Critical Values                       ***
+# *** QUESTION 1.1: Critical Values              ***
 # **************************************************
 
 # Initialisation
@@ -45,12 +35,12 @@ T = len(df_data_ln.index)
 N = 10000
 column = 'ZC Adj Close'
 
-# First Simulation
+# First simulation
 simulation_1 = pf.critical_value(df_data_ln, column, T, N)
 ar_params_1 = simulation_1[1]
 
 # *** Question 1.4 ***
-# Plot the histogram of the Test-Statistic.
+# Plot the histogram of the Test-Statistic
 fig, ax = plt.subplots(figsize=(15, 10))
 ax.hist(ar_params_1['DF_TS'], bins=50, edgecolor='black')
 ax.set_title('Test Statistic Distribution for N: ' + str(N))
@@ -61,11 +51,11 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_T-Stat Distribution.png'))
 plt.close()
 
 # *** Question 1.5 ***
-# Compute the critical values of the DF test.
+# Compute the critical values of the DF test
 critical_values_1 = simulation_1[0]
 critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_Critical_Values.tex'), float_format="%.2f")
 
-# Plot the histogram of the Test-Statistic and Critical Values.
+# Plot the histogram of the Test-Statistic and Critical Values
 fig, ax = plt.subplots(figsize=(15, 10))
 ax.hist(ar_params_1['DF_TS'], bins=50, edgecolor='black')
 ax.set_title('Test Statistic Distribution for N: ' + str(N))
@@ -80,17 +70,18 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q1.5_T-Stat Distribution_CV.png'
 plt.close()
 
 # *** Question 1.6 ***
-# Re-computing the simulation for T=500.
+# Re-computing the simulation for T=500
 simulation_2 = pf.critical_value(df_data_ln, column, T=500, N=N)
 critical_values_2 = simulation_2[0]
 
+
 # %%
 # **************************************************
-# *** 1.2: Testing Non-stationarity              ***
+# *** QUESTION 1.2: Testing Non-Stationarity     ***
 # **************************************************
 
 # *** Question 1.7 ***
-# Computing the DF Test.
+# Computing the DF Test
 DF_Test = pd.DataFrame(index=['DF_TS', 'CV 1%', 'CV 5%', 'CV 10%', 'Reject H0 1%', 'Reject H0 5%', 'Reject H0 10%',
                               'P_Value'], columns=l_adj_close_price)
 
@@ -109,22 +100,19 @@ DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
 DF_Test = pf.format_float(DF_Test)
 DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 
-# *** Question 1.8 ***
+
+# %%
+# **************************************************
+# *** QUESTION 2: Cointegration                  ***
+# **************************************************
 
 
 # %%
 # **************************************************
-# *** 2: Cointegration                           ***
+# *** QUESTION 2.1: Critical Values              ***
 # **************************************************
 
-# %%
-# **************************************************
-# *** 2.1: Critical Values                       ***
-# **************************************************
-
-# *** Question 2.1 ***
-
-# Compute Critical Values.
+# Compute critical values
 t_stat_coint = pf.simulate_coint_cv(T, N)
 # Second simulation for later use.
 t_stat_coint_500 = pf.simulate_coint_cv(T=500, N=N)
@@ -149,9 +137,10 @@ plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.png'))
 plt.close()
 
+
 # %%
 # **************************************************
-# *** 2.2: Testing for Cointegration             ***
+# *** QUESTION 2.2: Testing for Cointegration    ***
 # **************************************************
 
 # Cointegration results DataFrame, needed to construct another cointegration test statistics DataFrame
@@ -161,6 +150,7 @@ df_coint = pf.cointgration(df_data_ln)
 coint_test = pd.DataFrame(index=df_coint.index,
                           columns=['DF_TS', 'CV_1%', 'CV_5%', 'CV_10%', 'P_Value', 'Reject H0 1%', 'Reject H0 5%',
                                    'Reject H0 10%'])
+
 for index in df_coint.index:
     coint_test.loc[index]['DF_TS'] = df_coint.loc[index]['DF_TS']
     coint_test.loc[index]['CV_1%'] = cv_coint.loc[0.01]
@@ -175,12 +165,8 @@ coint_test_out = pf.format_float(coint_test)
 coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
 
 # *** Question 2.3 ***
-
 df_coint_out = pf.format_float(df_coint[['Alpha', 'Beta']])
 df_coint_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.3_A_B_Values.tex'))
-
-# *** Question 2.4 ***
-
 
 # *** Question 2.5 ***
 pA = df_data_ln['ZW Adj Close']
@@ -191,8 +177,8 @@ comb = alpha + beta * pB
 
 # Plot PA and Linear combination
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(pA.index), pA, label='Wheat')
-ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)')
+ax.plot(pd.to_datetime(pA.index), pA, label='Wheat', c='blue')
+ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)', c='green')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -207,51 +193,55 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
 
 
+
 # %%
 # **************************************************
-# *** 3.1: Trading Signal                        ***
+# *** QUESTION 3: Pair Trading                   ***
 # **************************************************
 
 
+# %%
+# **************************************************
+# *** QUESTION 3.1: Trading Signal               ***
+# **************************************************
+
 # *** Question 3.1 ***
-
 # *** Question 3.2 ***
-
 # *** Question 3.3 ***
 
 
 # %%
 # **************************************************
-# *** 3.2: In-sample Pair trading Strategy       ***
+# *** QUESTION 3.2: In-Sample Pair Trading       ***
 # **************************************************
 
-# *** Question 3.4 ***
-
-# *** Question 3.5 ***
 
 # %%
 # **************************************************
-# *** 3.2.2: Stop Loss                           ***
+# *** QUESTION 3.2.1: Direct Strategy            ***
+# **************************************************
+
+# *** Question 3.4 ***
+# *** Question 3.5 ***
+
+
+# %%
+# **************************************************
+# *** QUESTION 3.2.2: Stop Loss                  ***
 # **************************************************
 
 # *** Question 3.6 ***
-
 # *** Question 3.7 ***
 
 
 # %%
 # **************************************************
-# *** 3.3: Out-of-sample Pair-trading Strategy   ***
+# *** QUESTION 3.3: Out-of-Sample Pair Trading   ***
 # **************************************************
 
 # *** Question 3.8 ***
-
 # *** Question 3.9 ***
-
 # *** Question 3.10 ***
-
 # *** Question 3.11 ***
-
 # *** Question 3.12 ***
-
 # *** Question 3.13 ***
