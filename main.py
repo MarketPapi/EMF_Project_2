@@ -75,7 +75,7 @@ plt.axvline(x=critical_values_1.loc[0.05], color='y', label='CV 5%')
 plt.axvline(x=critical_values_1.loc[0.10], color='g', label='CV 10%')
 plt.legend()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat Distribution with CV'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q1.5_T-Stat Distribution_CV.png'))
 plt.close()
 
 # *** Question 1.6 ***
@@ -142,7 +142,7 @@ plt.axvline(x=cv_coint.loc[0.05], color='y', label='CV 5%')
 plt.axvline(x=cv_coint.loc[0.10], color='g', label='CV 10%')
 plt.legend()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat_Distribution_Coint'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.png'))
 plt.close()
 
 # %%
