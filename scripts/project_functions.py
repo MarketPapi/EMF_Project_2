@@ -1,16 +1,16 @@
+from decimal import Decimal
+from itertools import permutations
+from pathlib import Path
+from scipy import stats
+from scripts.project_parameters import paths
+from statsmodels.tsa.ar_model import AutoReg
+from tqdm import tqdm
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from decimal import Decimal
-from scipy import stats
-from pathlib import Path
-from scripts.project_parameters import paths
 import statsmodels.api as sm
-from statsmodels.tsa.ar_model import AutoReg
-from tqdm import tqdm
-from itertools import permutations
 
 
 def read_data(file_path, skiprows=0):
