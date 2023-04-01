@@ -66,7 +66,7 @@ plt.axvline(x=critical_values_1.loc[0.05], color='y', label='CV 5%')
 plt.axvline(x=critical_values_1.loc[0.10], color='g', label='CV 10%')
 plt.legend()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat Distribution with CV'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q1.5_T-Stat Distribution_CV.png'))
 plt.close()
 
 # *** Question 1.6 ***
@@ -131,7 +131,7 @@ plt.axvline(x=cv_coint.loc[0.05], color='y', label='CV 5%')
 plt.axvline(x=cv_coint.loc[0.10], color='g', label='CV 10%')
 plt.legend()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'T-Stat_Distribution_Coint'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.png'))
 plt.close()
 
 
@@ -174,8 +174,8 @@ comb = alpha + beta * pB
 
 # Plot PA and Linear combination
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(pA.index), pA, label='Wheat')
-ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)')
+ax.plot(pd.to_datetime(pA.index), pA, label='Wheat', c='blue')
+ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)', c='green')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -188,6 +188,7 @@ plt.show()
 fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
+
 
 
 # %%
