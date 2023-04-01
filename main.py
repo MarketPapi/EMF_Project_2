@@ -28,7 +28,7 @@ df_data_ln = pf.log_transform_cols(df_data, l_adj_close_price)
 # *** 1: Stationarity                            ***
 # **************************************************
 
-# *** Question 1.1  ***
+# *** Question 1.1  ***o0
 
 
 # *** Question 1.2  ***#
@@ -187,8 +187,8 @@ comb = alpha + beta * pB
 
 # Plot PA and Linear combination
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(pA.index), pA, label='Wheat')
-ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)')
+ax.plot(pd.to_datetime(pA.index), pA, label='Wheat', c='blue')
+ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)', c='green')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -201,6 +201,7 @@ plt.show()
 fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
+
 
 
 # %%
