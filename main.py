@@ -6,6 +6,7 @@ from pathlib import Path
 from scripts.project_parameters import paths
 import numpy as np
 import warnings
+import scipy
 import statsmodels.api as sm
 from tqdm import tqdm
 
@@ -130,6 +131,9 @@ t_stat_coint_500 = pf.simulate_coint_cv(T=500, N=N)
 df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
+# Save as Latex
+cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format="%.2f")
+
 
 # Plotting Histogram of critical values.
 fig, ax = plt.subplots(figsize=(15, 10))
