@@ -1,5 +1,5 @@
 from pathlib import Path
-from scripts.project_parameters import paths
+from scripts.parameters import paths
 from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
@@ -8,12 +8,12 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scripts.project_functions as pf
+import scripts.functions as fn
 import statsmodels.api as sm
 import warnings
 
 # Suppress warnings
-warnings.filterwarnings("ignore")
+warnings.filterwarnings('ignore')
 
 # %%
 # **************************************************
@@ -21,12 +21,12 @@ warnings.filterwarnings("ignore")
 # **************************************************
 
 # Importing dataset (commodities)
-df_data = pf.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
+df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
 
 # Taking logarithm of the adjusted close price
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
-df_data_ln = pf.log_transform_cols(df_data, l_adj_close_price)
+df_data_ln = fn.log_transform_cols(df_data, l_adj_close_price)
 
 
 # %%
@@ -40,7 +40,7 @@ N = 10000
 column = 'ZC Adj Close'
 
 # First simulation
-simulation_1 = pf.critical_value(df_data_ln, column, T, N)
+simulation_1 = fn.critical_value(df_data_ln, column, T, N)
 ar_params_1 = simulation_1[1]
 
 # *** Question 1.4 ***
@@ -57,7 +57,7 @@ plt.close()
 # *** Question 1.5 ***
 # Compute the critical values of the DF test
 critical_values_1 = simulation_1[0]
-critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_Critical_Values.tex'), float_format="%.2f")
+critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_Critical_Values.tex'), float_format='%.2f')
 
 # Plot the histogram of the Test-Statistic and Critical Values
 fig, ax = plt.subplots(figsize=(15, 10))
@@ -75,7 +75,7 @@ plt.close()
 
 # *** Question 1.6 ***
 # Re-computing the simulation for T=500
-simulation_2 = pf.critical_value(df_data_ln, column, T=500, N=N)
+simulation_2 = fn.critical_value(df_data_ln, column, T=500, N=N)
 critical_values_2 = simulation_2[0]
 
 
@@ -90,7 +90,7 @@ DF_Test = pd.DataFrame(index=['DF_TS', 'CV 1%', 'CV 5%', 'CV 10%', 'Reject H0 1%
                               'P_Value'], columns=l_adj_close_price)
 
 for col in l_adj_close_price:
-    t_stat_data = pf.reg(df_data_ln, col, lag=1)
+    t_stat_data = fn.reg(df_data_ln, col, lag=1)
     DF_Test.loc['DF_TS'][col] = t_stat_data
     DF_Test.loc['CV 1%'][col] = critical_values_1.loc[0.01]
     DF_Test.loc['CV 5%'][col] = critical_values_1.loc[0.05]
@@ -98,10 +98,10 @@ for col in l_adj_close_price:
     DF_Test.loc['Reject H0 1%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 1%'][col])
     DF_Test.loc['Reject H0 5%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 5%'][col])
     DF_Test.loc['Reject H0 10%'][col] = np.abs(DF_Test.loc['DF_TS'][col]) > np.abs(DF_Test.loc['CV 10%'][col])
-    DF_Test.loc['P_Value'][col] = pf.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
+    DF_Test.loc['P_Value'][col] = fn.get_pvalue(ar_params_1['DF_TS'], DF_Test.loc['DF_TS'][col])
 
 DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
-DF_Test = pf.format_float(DF_Test)
+DF_Test = fn.format_float(DF_Test)
 DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 
 
@@ -117,14 +117,14 @@ DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 # **************************************************
 
 # Compute critical values
-t_stat_coint = pf.simulate_coint_cv(T, N)
+t_stat_coint = fn.simulate_coint_cv(T, N)
 # Second simulation for later use.
-t_stat_coint_500 = pf.simulate_coint_cv(T=500, N=N)
+t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=N)
 df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
-cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format="%.2f")
+cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format='%.2f')
 
 
 # Plotting Histogram of critical values.
@@ -148,7 +148,7 @@ plt.close()
 # **************************************************
 
 # Cointegration results DataFrame, needed to construct another cointegration test statistics DataFrame
-df_coint = pf.cointgration(df_data_ln)
+df_coint = fn.cointgration(df_data_ln)
 
 # *** Question 2.2 ***
 coint_test = pd.DataFrame(index=df_coint.index,
@@ -160,16 +160,16 @@ for index in df_coint.index:
     coint_test.loc[index]['CV_1%'] = cv_coint.loc[0.01]
     coint_test.loc[index]['CV_5%'] = cv_coint.loc[0.05]
     coint_test.loc[index]['CV_10%'] = cv_coint.loc[0.1]
-    coint_test.loc[index]['P_Value'] = pf.get_pvalue(t_stat_coint, df_coint.loc[index]['DF_TS'])
+    coint_test.loc[index]['P_Value'] = fn.get_pvalue(t_stat_coint, df_coint.loc[index]['DF_TS'])
     coint_test.loc[index]['Reject H0 1%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.01])
     coint_test.loc[index]['Reject H0 5%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.05])
     coint_test.loc[index]['Reject H0 10%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.1])
 
-coint_test_out = pf.format_float(coint_test)
+coint_test_out = fn.format_float(coint_test)
 coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
 
 # *** Question 2.3 ***
-df_coint_out = pf.format_float(df_coint[['Alpha', 'Beta']])
+df_coint_out = fn.format_float(df_coint[['Alpha', 'Beta']])
 df_coint_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.3_A_B_Values.tex'))
 
 # *** Question 2.5 ***
@@ -204,7 +204,7 @@ plt.close()
 # **************************************************
 
 # Importing dataset (commodities)
-df_data = pf.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
+df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 
@@ -254,10 +254,10 @@ plt.close()
 
 # *** Question 3.3 ***
 # Autocorrelogram of signals
-pf.plot_autocorrelogram(s_data=df_signals['Signal'], outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Signals.png'))
+fn.plot_autocorrelogram(s_data=df_signals['Signal'], outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Signals.png'))
 
 # Ljung-Box test with p=10 lags
-pf.Ljung_Box_test(s_data=df_signals['Signal'])
+fn.Ljung_Box_test(s_data=df_signals['Signal'])
 
 """
 Observation: both autocorrelogram and Ljung-Box test indicate that signal process z_t^{tilde} is autocorrelated ==>

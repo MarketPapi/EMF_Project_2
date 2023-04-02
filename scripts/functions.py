@@ -2,7 +2,7 @@ from decimal import Decimal
 from itertools import permutations
 from pathlib import Path
 from scipy import stats
-from scripts.project_parameters import paths
+from scripts.parameters import paths
 from statsmodels.tsa.ar_model import AutoReg
 from tqdm import tqdm
 import matplotlib.dates as mdates
