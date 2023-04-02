@@ -221,19 +221,19 @@ Strategy: z_t >> 0 ==> short A, long B; z_t << 0 ==> short B, long A
 
 # *** Question 3.2 ***
 # Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close)
-
 df_signals = df_data[['ZW Adj Close', 'ZC Adj Close']]
 
+# Compute and plot normalized signals
 lr_model = LinearRegression()
 X = df_signals[['ZC Adj Close']]
-y = df_signals['ZW Adj Close']
+y = df_signals[['ZW Adj Close']]
 lr_model.fit(X, y)
-df_signals['Coint ZW'] = lr_model.predict(X)
-df_signals['Signal (z_t)'] = df_signals['ZW Adj Close'] - df_signals['Coint ZW']
-df_signals['Norm Signal'] = df_signals['Signal (z_t)'] / df_signals['Signal (z_t)'].std(ddof=0)
+df_signals['Predicted'] = lr_model.predict(X)
+df_signals['Signal'] = df_signals['ZW Adj Close'] - df_signals['Predicted']
+df_signals['Norm Signal'] = df_signals['Signal'] / df_signals['Signal'].std(ddof=0)
 
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(df_signals.index), df_signals['Norm Signal'], label='Normal Sign', c='red')
+ax.plot(pd.to_datetime(df_signals.index), df_signals['Norm Signal'], label='Norm Signal', c='red')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -242,7 +242,7 @@ ax.set_title('Wheat-Corn Pair')
 ax.legend()
 plt.show()
 fig.autofmt_xdate()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Signals.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Normalized_Signals.png'))
 plt.close()
 
 # *** Question 3.3 ***
@@ -286,19 +286,3 @@ print('Test-FLorian')
 # *** Question 3.11 ***
 # *** Question 3.12 ***
 # *** Question 3.13 ***
-
-
-rand_values = np.random.rand(100000)
-
-s = pd.Series(np.zeros(100000))
-for i in range(1, 100000):
-    s[i] += 1*s[i-1] + rand_values[i]
-
-model_1 = AutoReg(s,lags=1, trend="n").fit()
-phi = model_1.params[0]
-test = (phi-1) / model_1.bse[0]
-
-
-X = sm.add_constant(X)
-    model = sm.OLS(y, X)
-    reg_results = model.fit()
