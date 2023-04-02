@@ -203,6 +203,10 @@ plt.close()
 # *** QUESTION 3: Pair Trading                   ***
 # **************************************************
 
+# Importing dataset (commodities)
+df_data = pf.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
+l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
+df_data = df_data[l_adj_close_price]
 
 # %%
 # **************************************************
@@ -223,17 +227,20 @@ Strategy: z_t >> 0 ==> short A, long B; z_t << 0 ==> short B, long A
 # Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close)
 df_signals = df_data[['ZW Adj Close', 'ZC Adj Close']]
 
-# Compute and plot normalized signals
+# Compute signals (spreads)
 lr_model = LinearRegression()
 X = df_signals[['ZC Adj Close']]
 y = df_signals[['ZW Adj Close']]
 lr_model.fit(X, y)
 df_signals['Predicted'] = lr_model.predict(X)
 df_signals['Signal'] = df_signals['ZW Adj Close'] - df_signals['Predicted']
-df_signals['Norm Signal'] = df_signals['Signal'] / df_signals['Signal'].std(ddof=0)
 
+# Normalization ==> from now on, we refer to normalized signals as signals
+df_signals['Signal'] = df_signals['Signal'] / df_signals['Signal'].std(ddof=0)
+
+# Plot signals
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(df_signals.index), df_signals['Norm Signal'], label='Norm Signal', c='red')
+ax.plot(pd.to_datetime(df_signals.index), df_signals['Signal'], label='Signal', c='red')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -242,15 +249,23 @@ ax.set_title('Wheat-Corn Pair')
 ax.legend()
 plt.show()
 fig.autofmt_xdate()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Normalized_Signals.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Signals.png'))
 plt.close()
 
 # *** Question 3.3 ***
-# TODO: signals ==> get signals
-# TODO: correlogram ==> plot correlogram
-# TODO: Ljung Box test ==> lb test
-print('Test-FLorian')
+# Autocorrelogram of signals
+pf.plot_autocorrelogram(s_data=df_signals['Signal'], outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Signals.png'))
 
+# Ljung-Box test with p=10 lags
+pf.Ljung_Box_test(s_data=df_signals['Signal'])
+
+"""
+Observation: both autocorrelogram and Ljung-Box test indicate that signal process z_t^{tilde} is autocorrelated ==>
+we reject null rho_1 = ... = rho_p = 0 with p=10 lags at virtually any confidence level, and in correlogram we see that
+autocorrelations rho_k for k = 1, ..., 10 are all above the confidence interval @95%, hence rho_k are all significantly
+different from zero
+Implication: ???
+"""
 # %%
 # **************************************************
 # *** QUESTION 3.2: In-Sample Pair Trading       ***
@@ -263,6 +278,7 @@ print('Test-FLorian')
 # **************************************************
 
 # *** Question 3.4 ***
+
 # *** Question 3.5 ***
 
 

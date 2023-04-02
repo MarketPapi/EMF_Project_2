@@ -250,3 +250,50 @@ def simulate_coint_cv(T,N):
 
     return tstat
 
+
+def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):
+    # Assumption: i.i.d. process ==> sqrt(T)*rho_k follows N(0,1) ==> rho_k follows N(0,1/T)
+    T = len(s_data)
+    std_rho_k = np.sqrt(1 / T)
+    df_autocorrelogram = pd.DataFrame(columns=['Autocorrelation', 'CI @ {:.1%}'.format(1 - alpha)])
+    df_autocorrelogram.index.rename('Lags', inplace=True)
+    for k in range(1, max_lags+1):
+        rho_k = s_data.autocorr(lag=k)
+        crit_val = stats.norm.ppf((1 - alpha/2), loc=0, scale=std_rho_k)
+        conf_int = [-crit_val, crit_val]
+        df_autocorrelogram.loc[k, 'Autocorrelation'] = rho_k
+        df_autocorrelogram.loc[k, 'CI @ {:.1%}'.format(1 - alpha)] = conf_int
+    return df_autocorrelogram
+
+
+def plot_autocorrelogram(s_data, outfile, alpha=0.05, max_lags=10):
+    df_autocorrelogram = tab_autocorrelogram(s_data=s_data, alpha=alpha, max_lags=max_lags)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    s_autocorr = df_autocorrelogram['Autocorrelation']
+    s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
+    s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
+    ax.plot(df_autocorrelogram.index, s_autocorr, c='blue')
+    ax.plot(df_autocorrelogram.index, s_ci_lower, c='red')
+    ax.plot(df_autocorrelogram.index, s_ci_upper, c='red')
+    ax.set_title('Autocorrelogram {}'.format(s_data.name))
+    ax.set_xlabel('Lags')
+    ax.set_ylabel('k-Lags Autocorrelation')
+    plt.show()
+    fig.savefig(outfile)
+    plt.close()
+
+
+def Ljung_Box_test(s_data, p=10):
+    # Null: rho_1 = ... = rho_p = 0
+    # Alternative: rho_k != 0 for some k = 1,...,p
+    Q_p = 0
+    T = len(s_data)
+    for k in range(1, p+1):
+        rho_k = s_data.autocorr(lag=k)
+        Q_p += (1 / (T - k)) * (rho_k ** 2)
+    Q_p = (T * (T + 2)) * Q_p
+    p_value = 1 - stats.chi2.cdf(Q_p, p)
+    print('Ljung-Box Test Report')
+    print('Test stat (Q_p):', Q_p.round(2))
+    print('P-value:', p_value.round(2))
+
