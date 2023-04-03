@@ -3,6 +3,7 @@ from itertools import permutations
 from pathlib import Path
 from scipy import stats
 from scripts.parameters import paths
+from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from tqdm import tqdm
 import matplotlib.dates as mdates
@@ -12,6 +13,10 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 
+# %%
+# **************************************************
+# *** Branch: Artur                              ***
+# **************************************************
 
 def read_data(file_path, skiprows=0):
     """
@@ -28,15 +33,12 @@ def read_data(file_path, skiprows=0):
     df_data['Date'] = df_data['Date'].dt.strftime('%Y-%m-%d')
     # Set new index
     df_data.set_index('Date', inplace=True)
-    df_data.index.rename('DATE', inplace=True)
-
     # Rename the columns
     df_data.columns = ['ZC High', 'ZC Low', 'ZC Open', 'ZC Close', 'ZC Vol', 'ZC Adj Close',
                        'ZW High', 'ZW Low', 'ZW Open', 'ZW Close', 'ZW Vol', 'ZW Adj Close',
                        'ZS High', 'ZS Low', 'ZS Open', 'ZS Close', 'ZS Vol', 'ZS Adj Close',
                        'KC High', 'KC Low', 'KC Open', 'KC Close', 'KC Vol', 'KC Adj Close',
-                       'CC High', 'CC Low', 'CC Open', 'CC Close', 'CC Vol', 'CC Adj Close',
-                       ]
+                       'CC High', 'CC Low', 'CC Open', 'CC Close', 'CC Vol', 'CC Adj Close']
     return df_data
 
 
@@ -200,7 +202,8 @@ def cointgration(df):
 
     return comm_coint.T
 
-def simulate_coint_cv(T,N):
+
+def simulate_coint_cv(T, N):
     """
     Simulate test statistics.
     :param T: Time series length.
@@ -224,7 +227,6 @@ def simulate_coint_cv(T,N):
     tstat = []
 
     for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
-
         # Regress pA on pB
         model_1 = sm.OLS(pA[:, i], sm.add_constant(pB[:, i])).fit()
 
@@ -235,7 +237,7 @@ def simulate_coint_cv(T,N):
         resid_shifted = resid.shift(1)
         resid_shifted.dropna(inplace=True)
 
-        #Compute first difference
+        # Compute first difference
         resid_diff = pd.Series(resid - resid_shifted)
         resid_diff.dropna(inplace=True)
 
@@ -245,10 +247,28 @@ def simulate_coint_cv(T,N):
         # Compute DF_Tstat
         tstat_calc = model_2.params[0] / model_2.bse[0]
 
-        #Append to list
+        # Append to list
         tstat.append(tstat_calc)
 
     return tstat
+
+
+# %%
+# **************************************************
+# *** Branch: Anis                               ***
+# **************************************************
+
+def tab_spreads(df_data, A, B):
+    # Compute spreads
+    X = df_data[[B]]
+    y = df_data[A]
+    lr_model = LinearRegression()
+    lr_model.fit(X, y)
+    s_spreads = y - lr_model.predict(X)
+    # Normalization ==> we refer to normalized spreads as spreads
+    s_spreads = s_spreads / s_spreads.std(ddof=0)
+    s_spreads = s_spreads.rename('Spread')
+    return s_spreads
 
 
 def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):
@@ -257,9 +277,9 @@ def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):
     std_rho_k = np.sqrt(1 / T)
     df_autocorrelogram = pd.DataFrame(columns=['Autocorrelation', 'CI @ {:.1%}'.format(1 - alpha)])
     df_autocorrelogram.index.rename('Lags', inplace=True)
-    for k in range(1, max_lags+1):
+    for k in range(1, max_lags + 1):
         rho_k = s_data.autocorr(lag=k)
-        crit_val = stats.norm.ppf((1 - alpha/2), loc=0, scale=std_rho_k)
+        crit_val = stats.norm.ppf((1 - alpha / 2), loc=0, scale=std_rho_k)
         conf_int = [-crit_val, crit_val]
         df_autocorrelogram.loc[k, 'Autocorrelation'] = rho_k
         df_autocorrelogram.loc[k, 'CI @ {:.1%}'.format(1 - alpha)] = conf_int
@@ -270,8 +290,10 @@ def plot_autocorrelogram(s_data, outfile, alpha=0.05, max_lags=10):
     df_autocorrelogram = tab_autocorrelogram(s_data=s_data, alpha=alpha, max_lags=max_lags)
     fig, ax = plt.subplots(figsize=(10, 5))
     s_autocorr = df_autocorrelogram['Autocorrelation']
-    s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
-    s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
+    s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index],
+                           index=df_autocorrelogram.index)
+    s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index],
+                           index=df_autocorrelogram.index)
     ax.plot(df_autocorrelogram.index, s_autocorr, c='blue')
     ax.plot(df_autocorrelogram.index, s_ci_lower, c='red')
     ax.plot(df_autocorrelogram.index, s_ci_upper, c='red')
@@ -288,7 +310,7 @@ def Ljung_Box_test(s_data, p=10):
     # Alternative: rho_k != 0 for some k = 1,...,p
     Q_p = 0
     T = len(s_data)
-    for k in range(1, p+1):
+    for k in range(1, p + 1):
         rho_k = s_data.autocorr(lag=k)
         Q_p += (1 / (T - k)) * (rho_k ** 2)
     Q_p = (T * (T + 2)) * Q_p
@@ -296,4 +318,3 @@ def Ljung_Box_test(s_data, p=10):
     print('Ljung-Box Test Report')
     print('Test stat (Q_p):', Q_p.round(2))
     print('P-value:', p_value.round(2))
-

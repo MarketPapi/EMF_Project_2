@@ -1,6 +1,5 @@
 from pathlib import Path
 from scripts.parameters import paths
-from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
 from tqdm import tqdm
@@ -14,6 +13,7 @@ import warnings
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
+
 
 # %%
 # **************************************************
@@ -197,7 +197,6 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
 
 
-
 # %%
 # **************************************************
 # *** QUESTION 3: Pair Trading                   ***
@@ -208,6 +207,7 @@ df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.c
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 
+
 # %%
 # **************************************************
 # *** QUESTION 3.1: Trading Signal               ***
@@ -216,31 +216,21 @@ df_data = df_data[l_adj_close_price]
 # *** Question 3.1 ***
 """
 Model: P_t^{A} = a + b*P_t^{B} + z_t
-Conclusion: as long as cointegration relation holds, we should expect z_t = 0, so no trading signal
+Conclusion: as long as cointegration relation holds, we should expect z_t = 0, i.e. no spread
 Arbitrage: z_t >> 0 ==> P_t^{A} - (a + b*P_t^{B}) >> 0 we have that the price of A is significantly above the cointegrated
 price of A ==> we expect P_t^{A} to back to the cointegrated price, so we short A and use the proceeds to long B, and we
 make a profit as long as the two prices converge back to cointegrated price
-Strategy: z_t >> 0 ==> short A, long B; z_t << 0 ==> short B, long A
+Strategy: z_t >> 0 (spread >> 0) ==> short A, long B; z_t << 0 (spread << 0) ==> short B, long A
 """
 
 # *** Question 3.2 ***
-# Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close)
-df_signals = df_data[['ZW Adj Close', 'ZC Adj Close']]
+# Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
+# Concept: we will use spreads to create trading signals
+s_spreads = fn.tab_spreads(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close')
 
-# Compute signals (spreads)
-lr_model = LinearRegression()
-X = df_signals[['ZC Adj Close']]
-y = df_signals[['ZW Adj Close']]
-lr_model.fit(X, y)
-df_signals['Predicted'] = lr_model.predict(X)
-df_signals['Signal'] = df_signals['ZW Adj Close'] - df_signals['Predicted']
-
-# Normalization ==> from now on, we refer to normalized signals as signals
-df_signals['Signal'] = df_signals['Signal'] / df_signals['Signal'].std(ddof=0)
-
-# Plot signals
+# Plot spreads
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(df_signals.index), df_signals['Signal'], label='Signal', c='red')
+ax.plot(pd.to_datetime(s_spreads.index), s_spreads, label='Spread', c='red')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -249,23 +239,26 @@ ax.set_title('Wheat-Corn Pair')
 ax.legend()
 plt.show()
 fig.autofmt_xdate()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Signals.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spreads.png'))
 plt.close()
 
+
 # *** Question 3.3 ***
-# Autocorrelogram of signals
-fn.plot_autocorrelogram(s_data=df_signals['Signal'], outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Signals.png'))
+# Autocorrelogram of spreads
+fn.plot_autocorrelogram(s_data=s_spreads, outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spreads.png'))
 
 # Ljung-Box test with p=10 lags
-fn.Ljung_Box_test(s_data=df_signals['Signal'])
+fn.Ljung_Box_test(s_data=s_spreads)
 
 """
-Observation: both autocorrelogram and Ljung-Box test indicate that signal process z_t^{tilde} is autocorrelated ==>
+Observation: both autocorrelogram and Ljung-Box test indicate that spread process z_t^{tilde} is autocorrelated ==>
 we reject null rho_1 = ... = rho_p = 0 with p=10 lags at virtually any confidence level, and in correlogram we see that
 autocorrelations rho_k for k = 1, ..., 10 are all above the confidence interval @95%, hence rho_k are all significantly
 different from zero
 Implication: ???
 """
+
+
 # %%
 # **************************************************
 # *** QUESTION 3.2: In-Sample Pair Trading       ***
@@ -278,8 +271,59 @@ Implication: ???
 # **************************************************
 
 # *** Question 3.4 ***
+def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
+    # Assumption: sig1 open @t=0 and sig1 close @t=1 ==> open position at close t=0, and close position at close t=1
+    # Initialization
+    df_PT_insample = pd.DataFrame()
+    df_PT_insample[A] = df_data[A]
+    df_PT_insample[B] = df_data[B]
+    df_PT_insample['Spread'] = fn.tab_spreads(df_data=df_data, A=A, B=B)
 
+    # Signals
+    df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
+    df_PT_insample['Sig2 Open'] = (df_PT_insample['Spread'] < -in_level)
+    df_PT_insample['Sig1 Close'] = (df_PT_insample['Spread'] <= 0)
+    df_PT_insample['Sig2 Close'] = (df_PT_insample['Spread'] >= 0)
+    if stop_level is not None:
+        df_PT_insample['Sig1 Stop'] = (df_PT_insample['Spread'] > stop_level)
+        df_PT_insample['Sig2 Stop'] = (df_PT_insample['Spread'] < -stop_level)
+
+    # Positions
+    curr = df_PT_insample.index[0]
+    df_PT_insample.loc[curr, 'Pos1'] = df_PT_insample.loc[curr, 'Sig1 Open']
+    df_PT_insample.loc[curr, 'Pos2'] = df_PT_insample.loc[curr, 'Sig2 Open']
+    for i in range(1, len(df_PT_insample.index[1:])+1):
+        prev = df_PT_insample.index[i-1]
+        curr = df_PT_insample.index[i]
+        if stop_level is None:
+            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
+            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
+        elif stop_level is not None:
+            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close'] and not df_PT_insample.loc[prev, 'Sig1 Stop']))
+            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close'] and not df_PT_insample.loc[prev, 'Sig2 Stop']))
+    for col in df_PT_insample.columns[3:]:
+        df_PT_insample[col] = df_PT_insample[col].astype('bool')
+
+    return df_PT_insample
+
+
+df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
 # *** Question 3.5 ***
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # %%
