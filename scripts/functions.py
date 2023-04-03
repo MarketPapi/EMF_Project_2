@@ -128,7 +128,7 @@ def critical_value(df, column, T, N):
         # Standard error calculation
         u = p_t.mean() - phi_hat * p_t_1.mean()
         s2 = (1/(T_1-1))*sum((p_t - u - phi_hat*p_t_1)**2)
-        phi_std = s2 / (sum((p_t_1 - p_t_1.mean()) ** 2) ** 0.5)
+        phi_std = (s2 / sum((p_t_1 - p_t_1.mean()) ** 2)) ** 0.5
 
         # Step 4: Compute the T-Statistic
         df_stat = (phi_hat - 1) / phi_std
