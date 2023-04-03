@@ -146,9 +146,7 @@ plt.close()
 df_coint = fn.cointegration(df_data_ln, column_names=['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao'], permut=True)
 
 # *** Question 2.2 ***
-coint_test = pd.DataFrame(index=df_coint.index,
-                          columns=['DF_TS', 'CV_1%', 'CV_5%', 'CV_10%', 'P_Value', 'Reject H0 1%', 'Reject H0 5%',
-                                   'Reject H0 10%'])
+coint_test = pd.DataFrame(index=df_coint.index, columns=['DF_TS', 'CV_1%', 'CV_5%', 'CV_10%', 'P_Value', 'Reject H0 1%', 'Reject H0 5%', 'Reject H0 10%'])
 
 for index in df_coint.index:
     coint_test.loc[index]['DF_TS'] = df_coint.loc[index]['DF_TS']
@@ -162,9 +160,7 @@ for index in df_coint.index:
 
 coint_test_out = fn.format_float(coint_test)
 coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
-small_coint_test = coint_test_out[
-    (coint_test_out['Reject H0 1%'] == True) | (coint_test_out['Reject H0 5%'] == True) | (
-                coint_test_out['Reject H0 10%'] == True)]
+small_coint_test = coint_test_out[(coint_test_out['Reject H0 1%'] == True) | (coint_test_out['Reject H0 5%'] == True) | (coint_test_out['Reject H0 10%'] == True)]
 small_coint_test.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Small_Coint_Test_Results.tex'))
 
 # *** Question 2.3 ***
@@ -297,10 +293,8 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
         prev = df_PT_insample.index[i-1]
         curr = df_PT_insample.index[i]
         if stop_level is None:
-            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (
-                        df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
-            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (
-                        df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
+            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
+            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
         elif stop_level is not None:
             df_PT_insample.loc[curr, 'Pos1'] = ((df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']) or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close'] and not df_PT_insample.loc[prev, 'Sig1 Stop']))
             df_PT_insample.loc[curr, 'Pos2'] = ((df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']) or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close'] and not df_PT_insample.loc[prev, 'Sig2 Stop']))
