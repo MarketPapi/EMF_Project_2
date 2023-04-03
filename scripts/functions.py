@@ -4,7 +4,6 @@ from pathlib import Path
 from scipy import stats
 from scripts.parameters import paths
 from sklearn.linear_model import LinearRegression
-from statsmodels.tsa.ar_model import AutoReg
 from tqdm import tqdm
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -119,23 +118,22 @@ def critical_value(df, column, T, N):
     for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
         # Step 3: Estimate AR(1) Model
 
-        ar_model = AutoReg(white_noise_agg[:, i], lags=1, trend='c').fit()
-        phi_hat = ar_model.params[1]
-        phi_std = ar_model.bse[1]
-
-        '''
+        # White noise array.
         p_t = pd.Series(white_noise_agg[:, i])[1:]
+        # Lagged White noise array.
         p_t_1 = pd.Series(white_noise_agg[:, i]).shift(1)[1:]
         T_1 = len(p_t)
+        # Phi hat calculation
         phi_hat = p_t.cov(p_t_1) / p_t_1.var()
+        # Standard error calculation
         u = p_t.mean() - phi_hat * p_t_1.mean()
         s2 = (1/(T_1-1))*sum((p_t - u - phi_hat*p_t_1)**2)
         phi_std = s2 / (sum((p_t_1 - p_t_1.mean()) ** 2) ** 0.5)
-        '''
 
         # Step 4: Compute the T-Statistic
         df_stat = (phi_hat - 1) / phi_std
 
+        # Save to DataFrame
         ar_parameters.loc[i] = [phi_hat, phi_std, df_stat]
 
     # Computing the critical values

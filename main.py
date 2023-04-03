@@ -11,7 +11,6 @@ import warnings
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
 from tqdm import tqdm
-import statsmodels.api as sm
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
