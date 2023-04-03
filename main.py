@@ -461,9 +461,7 @@ for col in l_adj_close_price:
     u = p_t.mean() - phi_hat * p_t_1.mean()
 
     s2 = (1/(T_1-1))*sum((p_t - u - phi_hat*p_t_1)**2)
-    print(s2)
     phi_std = (s2 / (sum((p_t_1 - p_t_1.mean()) ** 2)))** 0.5
-    print(phi_std)
 
     # Step 4: Compute the T-Statistic
     df_stat = (phi_hat - 1) / phi_std
