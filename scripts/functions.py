@@ -13,6 +13,7 @@ import pandas as pd
 import seaborn as sns
 import statsmodels.api as sm
 
+
 # %%
 # **************************************************
 # *** Branch: Artur                              ***
@@ -157,27 +158,34 @@ def format_float(df):
     return df_new
 
 
-def cointgration(df):
+def cointegration(df, column_names, permut=True):
     """
-    Running a regression of log-prices on combinations of assets.
+    Running a regression of log-prices on combinations of assets
+    or a single pair of assets.
 
-    :param df: DataFrame with log prices.
+    :param df: DataFrame with prices.
     :return: DataFrame with alpha, beta and DF Test-Statistic.
     """
 
-    cols = list(df.columns)
-    combos = list(permutations(range(len(cols)), 2))
+    # Create permutations with asset pairs, in a list [(0,1),(0,2)..]
+    if permut:
+        combos = list(permutations(range(len(list(df.columns))), 2))
+    else:
+        # WARNING: This is done to pass a dataframe for Corn-Wheat, but will regress Wheat-Corn.
+        # Very dirty, I know...
+        combos = [(1, 0)]
 
-    comm_names = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
+    # Output DataFrame
     comm_coint = pd.DataFrame(index=['Alpha', 'Beta', 'DF_TS'])
 
     for i, j in combos:
-        comm_name = str(comm_names[i]) + '-' + str(comm_names[j])
+        # Create asset pair name
+        comm_name = str(column_names[i]) + '-' + str(column_names[j])
 
-        # Regression between contemporaneous log-prices.
-        # Regressing i on j
+        # Regression between contemporaneous log-prices (i on j).
         asset1 = df.iloc[:, i]
         asset2 = df.iloc[:, j]
+        print(asset1.name, asset2.name)
         model_1 = sm.OLS(asset1, sm.add_constant(asset2)).fit()
         alpha = model_1.params['const']
         beta = model_1.params[1]
@@ -189,7 +197,7 @@ def cointgration(df):
         resid_fd = pd.Series(resid - resid_lagged)
         resid_fd.dropna(inplace=True)
 
-        # 2nd Regression
+        # 2nd Regression (first difference on lagged residual).
         model_2 = sm.OLS(resid_fd, sm.add_constant(resid_lagged)).fit()
 
         # Output DF_Test

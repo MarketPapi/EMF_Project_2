@@ -1,19 +1,20 @@
 from pathlib import Path
 from scripts.parameters import paths
-from statsmodels.tsa.ar_model import AutoReg
-from statsmodels.tsa.stattools import adfuller
-from tqdm import tqdm
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scripts.functions as fn
-import statsmodels.api as sm
 import warnings
+
+# Packages for testing functions (DELETE LATER)
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.stattools import adfuller
+from tqdm import tqdm
+import statsmodels.api as sm
 
 # Suppress warnings
 warnings.filterwarnings('ignore')
-
 
 # %%
 # **************************************************
@@ -27,7 +28,6 @@ df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.c
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 df_data_ln = fn.log_transform_cols(df_data, l_adj_close_price)
-
 
 # %%
 # **************************************************
@@ -78,7 +78,6 @@ plt.close()
 simulation_2 = fn.critical_value(df_data_ln, column, T=500, N=N)
 critical_values_2 = simulation_2[0]
 
-
 # %%
 # **************************************************
 # *** QUESTION 1.2: Testing Non-Stationarity     ***
@@ -104,7 +103,6 @@ DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
 DF_Test = fn.format_float(DF_Test)
 DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 
-
 # %%
 # **************************************************
 # *** QUESTION 2: Cointegration                  ***
@@ -126,7 +124,6 @@ cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
 cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format='%.2f')
 
-
 # Plotting Histogram of critical values.
 fig, ax = plt.subplots(figsize=(15, 10))
 ax.hist(df_ts_coint['DF_TS'], bins=50, edgecolor='black')
@@ -141,14 +138,13 @@ plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.png'))
 plt.close()
 
-
 # %%
 # **************************************************
 # *** QUESTION 2.2: Testing for Cointegration    ***
 # **************************************************
 
 # Cointegration results DataFrame, needed to construct another cointegration test statistics DataFrame
-df_coint = fn.cointgration(df_data_ln)
+df_coint = fn.cointegration(df_data_ln, column_names=['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao'], permut=True)
 
 # *** Question 2.2 ***
 coint_test = pd.DataFrame(index=df_coint.index,
@@ -167,6 +163,10 @@ for index in df_coint.index:
 
 coint_test_out = fn.format_float(coint_test)
 coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
+small_coint_test = coint_test_out[
+    (coint_test_out['Reject H0 1%'] == True) | (coint_test_out['Reject H0 5%'] == True) | (
+                coint_test_out['Reject H0 10%'] == True)]
+small_coint_test.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Small_Coint_Test_Results.tex'))
 
 # *** Question 2.3 ***
 df_coint_out = fn.format_float(df_coint[['Alpha', 'Beta']])
@@ -196,7 +196,6 @@ fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
 
-
 # %%
 # **************************************************
 # *** QUESTION 3: Pair Trading                   ***
@@ -206,7 +205,6 @@ plt.close()
 df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.csv'))
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
-
 
 # %%
 # **************************************************
@@ -242,10 +240,10 @@ fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spreads.png'))
 plt.close()
 
-
 # *** Question 3.3 ***
 # Autocorrelogram of spreads
-fn.plot_autocorrelogram(s_data=s_spreads, outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spreads.png'))
+fn.plot_autocorrelogram(s_data=s_spreads,
+                        outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spreads.png'))
 
 # Ljung-Box test with p=10 lags
 fn.Ljung_Box_test(s_data=s_spreads)
@@ -292,15 +290,21 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     curr = df_PT_insample.index[0]
     df_PT_insample.loc[curr, 'Pos1'] = df_PT_insample.loc[curr, 'Sig1 Open']
     df_PT_insample.loc[curr, 'Pos2'] = df_PT_insample.loc[curr, 'Sig2 Open']
-    for i in range(1, len(df_PT_insample.index[1:])+1):
-        prev = df_PT_insample.index[i-1]
+    for i in range(1, len(df_PT_insample.index[1:]) + 1):
+        prev = df_PT_insample.index[i - 1]
         curr = df_PT_insample.index[i]
         if stop_level is None:
-            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
-            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
+            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (
+                        df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
+            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (
+                        df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
         elif stop_level is not None:
-            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close'] and not df_PT_insample.loc[prev, 'Sig1 Stop']))
-            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close'] and not df_PT_insample.loc[prev, 'Sig2 Stop']))
+            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (
+                        df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close'] and not
+                df_PT_insample.loc[prev, 'Sig1 Stop']))
+            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (
+                        df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close'] and not
+                df_PT_insample.loc[prev, 'Sig2 Stop']))
     for col in df_PT_insample.columns[3:]:
         df_PT_insample[col] = df_PT_insample[col].astype('bool')
 
@@ -309,21 +313,6 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
 
 df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
 # *** Question 3.5 ***
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # %%
