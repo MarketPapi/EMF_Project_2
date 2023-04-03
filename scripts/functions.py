@@ -118,9 +118,20 @@ def critical_value(df, column, T, N):
 
     for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
         # Step 3: Estimate AR(1) Model
+
         ar_model = AutoReg(white_noise_agg[:, i], lags=1, trend='c').fit()
         phi_hat = ar_model.params[1]
         phi_std = ar_model.bse[1]
+
+        '''
+        p_t = pd.Series(white_noise_agg[:, i])[1:]
+        p_t_1 = pd.Series(white_noise_agg[:, i]).shift(1)[1:]
+        T_1 = len(p_t)
+        phi_hat = p_t.cov(p_t_1) / p_t_1.var()
+        u = p_t.mean() - phi_hat * p_t_1.mean()
+        s2 = (1/(T_1-1))*sum((p_t - u - phi_hat*p_t_1)**2)
+        phi_std = s2 / (sum((p_t_1 - p_t_1.mean()) ** 2) ** 0.5)
+        '''
 
         # Step 4: Compute the T-Statistic
         df_stat = (phi_hat - 1) / phi_std
@@ -326,3 +337,12 @@ def Ljung_Box_test(s_data, p=10):
     print('Ljung-Box Test Report')
     print('Test stat (Q_p):', Q_p.round(2))
     print('P-value:', p_value.round(2))
+
+
+
+# %%
+# **************************************************
+# *** Branch: Florian                            ***
+# **************************************************
+
+
