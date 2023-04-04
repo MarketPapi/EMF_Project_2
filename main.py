@@ -251,7 +251,6 @@ different from zero
 Implication: ???
 """
 
-
 # %%
 # **************************************************
 # *** QUESTION 3.2: In-Sample Pair Trading       ***
@@ -274,37 +273,75 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
 
     # Signals
     df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
-    df_PT_insample['Sig2 Open'] = (df_PT_insample['Spread'] < -in_level)
     df_PT_insample['Sig1 Close'] = (df_PT_insample['Spread'] <= 0)
-    df_PT_insample['Sig2 Close'] = (df_PT_insample['Spread'] >= 0)
     if stop_level is not None:
         df_PT_insample['Sig1 Stop'] = (df_PT_insample['Spread'] > stop_level)
+
+    df_PT_insample['Sig2 Open'] = (df_PT_insample['Spread'] < -in_level)
+    df_PT_insample['Sig2 Close'] = (df_PT_insample['Spread'] >= 0)
+    if stop_level is not None:
         df_PT_insample['Sig2 Stop'] = (df_PT_insample['Spread'] < -stop_level)
 
-    # Positions
+    # Positions @t=0
     curr = df_PT_insample.index[0]
     if stop_level is None:
-        df_PT_insample.loc[curr, 'Pos1'] = df_PT_insample.loc[curr, 'Sig1 Open']
-        df_PT_insample.loc[curr, 'Pos2'] = df_PT_insample.loc[curr, 'Sig2 Open']
+        # Position1
+        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = df_PT_insample.loc[curr, 'Sig1 Open']
+        df_PT_insample.loc[curr, 'Pos1 Close'] = False
+        # Position2
+        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = df_PT_insample.loc[curr, 'Sig2 Open']
+        df_PT_insample.loc[curr, 'Pos2 Close'] = False
+
     elif stop_level is not None:
-        df_PT_insample.loc[curr, 'Pos1'] = df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']
-        df_PT_insample.loc[curr, 'Pos2'] = df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']
+        # Position1
+        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = (df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop'])
+        df_PT_insample.loc[curr, 'Pos1 Close'] = False
+        # Position2
+        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = (df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop'])
+        df_PT_insample.loc[curr, 'Pos2 Close'] = False
+
+    # Positions @t>=1
     for i in range(1, len(df_PT_insample.index[1:])+1):
         prev = df_PT_insample.index[i-1]
         curr = df_PT_insample.index[i]
         if stop_level is None:
-            df_PT_insample.loc[curr, 'Pos1'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close']))
-            df_PT_insample.loc[curr, 'Pos2'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close']))
+            # Position1
+            df_PT_insample.loc[curr, 'Pos1 Active'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[curr, 'Sig1 Close'])
+            # Position2
+            df_PT_insample.loc[curr, 'Pos2 Active'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[curr, 'Sig2 Close'])
+
         elif stop_level is not None:
-            df_PT_insample.loc[curr, 'Pos1'] = ((df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']) or (df_PT_insample.loc[prev, 'Pos1'] and not df_PT_insample.loc[prev, 'Sig1 Close'] and not df_PT_insample.loc[prev, 'Sig1 Stop']))
-            df_PT_insample.loc[curr, 'Pos2'] = ((df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']) or (df_PT_insample.loc[prev, 'Pos2'] and not df_PT_insample.loc[prev, 'Sig2 Close'] and not df_PT_insample.loc[prev, 'Sig2 Stop']))
+            # Position1
+            df_PT_insample.loc[curr, 'Pos1 Active'] = ((df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']) or (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and (df_PT_insample.loc[curr, 'Sig1 Close'] or df_PT_insample.loc[curr, 'Sig1 Stop']))
+            # Position2
+            df_PT_insample.loc[curr, 'Pos2 Active'] = ((df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']) or (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and (df_PT_insample.loc[curr, 'Sig2 Close'] or df_PT_insample.loc[curr, 'Sig2 Stop']))
+
+    # Close open positions at end of time window
+    curr = df_PT_insample.index[-1]
+    if df_PT_insample.loc[curr, 'Pos1 Active']:
+        df_PT_insample.loc[curr, 'Pos1 Close'] = True
+
+    if df_PT_insample.loc[curr, 'Pos2 Active']:
+        df_PT_insample.loc[curr, 'Pos2 Close'] = True
+
+    # Format as numpy.bool
     for col in df_PT_insample.columns[3:]:
         df_PT_insample[col] = df_PT_insample[col].astype('bool')
 
+    # TODO: Accounting
     return df_PT_insample
 
 
 df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
+
 # *** Question 3.5 ***
 
 
