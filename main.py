@@ -263,12 +263,14 @@ Implication: ???
 # **************************************************
 
 # *** Question 3.4 ***
+
+
 def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     # Assumption: sig1 open @t=0 and sig1 close @t=1 ==> open position at close t=0, and close position at close t=1
     # Initialization
     df_PT_insample = pd.DataFrame()
-    df_PT_insample[A] = df_data[A]
-    df_PT_insample[B] = df_data[B]
+    df_PT_insample['PriceA'] = df_data[A]
+    df_PT_insample['PriceB'] = df_data[B]
     df_PT_insample['Spread'] = fn.tab_spreads(df_data=df_data, A=A, B=B)
 
     # Signals
@@ -340,8 +342,126 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     return df_PT_insample
 
 
-df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
+def execute_trades(df_PT, W, L):
+    # Initialization
+    df_PT = df_PT.copy()
+    curr = df_PT.index[0]
+    IM = 1 / (1 + L)
+    df_PT.loc[curr, 'SizeA'] = 0
+    df_PT.loc[curr, 'SizeB'] = 0
+    df_PT.loc[curr, 'Cash'] = W
+    df_PT.loc[curr, 'Margin Account'] = 0
+    df_PT.loc[curr, 'Long Securities'] = 0
+    df_PT.loc[curr, 'Short Securities'] = 0
+    df_PT.loc[curr, 'Equity'] = W
+    df_PT.loc[curr, 'Total Assets'] = np.sum([df_PT.loc[curr, col] for col in ['Cash', 'Margin Account', 'Long Securities']])
+    df_PT.loc[curr, 'Total Liabilities'] = np.sum([df_PT.loc[curr, col] for col in ['Short Securities', 'Equity']])
+    ls_cols = ['SizeA', 'SizeB', 'Cash', 'Margin Account', 'Long Securities', 'Short Securities', 'Equity', 'Total Assets', 'Total Liabilities']
 
+    # Accounting
+    for i in range(len(df_PT.index)):
+        # Bring forward balances
+        curr = df_PT.index[i]
+        if i > 0:
+            prev = df_PT.index[i-1]
+            for col in ls_cols:
+                df_PT.loc[curr, col] = df_PT.loc[prev, col]
+
+        # Position1
+        if df_PT.loc[curr, 'Pos1 Active']:
+            # Open position
+            if df_PT.loc[curr, 'Pos1 Open']:
+                # Deposit on margin account
+                df_PT.loc[curr, 'Cash'] -= IM * df_PT.loc[curr, 'Equity']
+                df_PT.loc[curr, 'Margin Account'] += IM * df_PT.loc[curr, 'Equity']
+                # Short leg (A)
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'Short Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'SizeA'] = df_PT.loc[curr, 'Short Securities'] / df_PT.loc[curr, 'PriceA']
+                # Long leg (B)
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'Long Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'SizeB'] = df_PT.loc[curr, 'Long Securities'] / df_PT.loc[curr, 'PriceB']
+
+            # Market-to-market position
+            else:
+                # Short leg (A)
+                prev = df_PT.index[i-1]
+                df_PT.loc[curr, 'Short Securities'] += (df_PT.loc[curr, 'PriceA'] - df_PT.loc[prev, 'PriceA']) * df_PT.loc[curr, 'SizeA']
+                df_PT.loc[curr, 'Equity'] -= (df_PT.loc[curr, 'PriceA'] - df_PT.loc[prev, 'PriceA']) * df_PT.loc[curr, 'SizeA']
+                # Long leg (B)
+                df_PT.loc[curr, 'Long Securities'] += (df_PT.loc[curr, 'PriceB'] - df_PT.loc[prev, 'PriceB']) * df_PT.loc[curr, 'SizeB']
+                df_PT.loc[curr, 'Equity'] += (df_PT.loc[curr, 'PriceB'] - df_PT.loc[prev, 'PriceB']) * df_PT.loc[curr, 'SizeB']
+
+            # Close position (after MTM)
+            if df_PT.loc[curr, 'Pos1 Close']:
+                # Long leg (B)
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Long Securities']
+                df_PT.loc[curr, 'Long Securities'] -= df_PT.loc[curr, 'Long Securities'] # Zeroed
+                df_PT.loc[curr, 'SizeB'] = 0
+                # Short leg (A)
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Short Securities']
+                df_PT.loc[curr, 'Short Securities'] -= df_PT.loc[curr, 'Short Securities'] # Zeroed
+                df_PT.loc[curr, 'SizeA'] = 0
+                # Withdraw from margin account
+                df_PT.loc[curr, 'Cash'] += df_PT.loc[curr, 'Margin Account']
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Margin Account'] # Zeroed
+
+        # Position2
+        elif df_PT.loc[curr, 'Pos2 Active']:
+            # Open position
+            if df_PT.loc[curr, 'Pos2 Open']:
+                # Deposit on margin account
+                df_PT.loc[curr, 'Cash'] -= IM * df_PT.loc[curr, 'Equity']
+                df_PT.loc[curr, 'Margin Account'] += IM * df_PT.loc[curr, 'Equity']
+                # Short leg (B)
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'Short Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'SizeB'] = df_PT.loc[curr, 'Short Securities'] / df_PT.loc[curr, 'PriceB']
+                # Long leg (A)
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'Long Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
+                df_PT.loc[curr, 'SizeA'] = df_PT.loc[curr, 'Long Securities'] / df_PT.loc[curr, 'PriceA']
+
+            # Market-to-market position
+            else:
+                # Short leg (B)
+                prev = df_PT.index[i-1]
+                df_PT.loc[curr, 'Short Securities'] += (df_PT.loc[curr, 'PriceB'] - df_PT.loc[prev, 'PriceB']) * df_PT.loc[curr, 'SizeB']
+                df_PT.loc[curr, 'Equity'] -= (df_PT.loc[curr, 'PriceB'] - df_PT.loc[prev, 'PriceB']) * df_PT.loc[curr, 'SizeB']
+                # Long leg (A)
+                df_PT.loc[curr, 'Long Securities'] += (df_PT.loc[curr, 'PriceA'] - df_PT.loc[prev, 'PriceA']) * df_PT.loc[curr, 'SizeA']
+                df_PT.loc[curr, 'Equity'] += (df_PT.loc[curr, 'PriceA'] - df_PT.loc[prev, 'PriceA']) * df_PT.loc[curr, 'SizeA']
+
+            # Close position (after MTM)
+            if df_PT.loc[curr, 'Pos2 Close']:
+                # Long leg (A)
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Long Securities']
+                df_PT.loc[curr, 'Long Securities'] -= df_PT.loc[curr, 'Long Securities'] # Zeroed
+                df_PT.loc[curr, 'SizeA'] = 0
+                # Short leg (B)
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Short Securities']
+                df_PT.loc[curr, 'Short Securities'] -= df_PT.loc[curr, 'Short Securities'] # Zeroed
+                df_PT.loc[curr, 'SizeB'] = 0
+                # Withdraw from margin account
+                df_PT.loc[curr, 'Cash'] += df_PT.loc[curr, 'Margin Account']
+                df_PT.loc[curr, 'Margin Account'] -= df_PT.loc[curr, 'Margin Account'] # Zeroed
+
+        # Total assets and liabilities
+        df_PT.loc[curr, 'Total Assets'] = np.sum([df_PT.loc[curr, col] for col in ['Cash', 'Margin Account', 'Long Securities']])
+        df_PT.loc[curr, 'Total Liabilities'] = np.sum([df_PT.loc[curr, col] for col in ['Short Securities', 'Equity']])
+
+    # Rounding
+    """
+    for col in ls_cols:
+        df_PT[col] = df_PT[col].round(2)
+    """
+
+    # Return output
+    return df_PT
+
+df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
+df_test = execute_trades(df_PT=df_test, W=1000, L=2)
 # *** Question 3.5 ***
 
 
