@@ -180,9 +180,8 @@ def cointegration(df, column_names, permut=True):
     if permut:
         combos = list(permutations(range(len(list(df.columns))), 2))
     else:
-        # WARNING: This is done to pass a dataframe for Corn-Wheat, but will regress Wheat-Corn.
-        # Very dirty, I know...
-        combos = [(1, 0)]
+        # Reg asset1=X on asset0=y
+        combos = [(0, 1)]
 
     # Output DataFrame
     comm_coint = pd.DataFrame(index=['Alpha', 'Beta', 'DF_TS'])
@@ -194,7 +193,6 @@ def cointegration(df, column_names, permut=True):
         # Regression between contemporaneous log-prices (i on j).
         asset1 = df.iloc[:, i]
         asset2 = df.iloc[:, j]
-        print(asset1.name, asset2.name)
         model_1 = sm.OLS(asset1, sm.add_constant(asset2)).fit()
         alpha = model_1.params['const']
         beta = model_1.params[1]

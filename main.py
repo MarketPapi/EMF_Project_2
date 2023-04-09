@@ -114,11 +114,15 @@ DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 # *** QUESTION 2.1: Critical Values              ***
 # **************************************************
 
-# Compute critical values
-t_stat_coint = fn.simulate_coint_cv(T, N)
-# Second simulation for later use.
-t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=N)
+# Simulate distribution
+t_stat_coint = fn.simulate_coint_cv(T, N=N)
 df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
+
+# Second simulation for later use
+t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=N)
+df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
+
+# Compute critical values
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
@@ -265,22 +269,6 @@ Implication: ???
 
 # *** Question 3.4 ***
 
-def tab_spreads(df_data, A, B):
-    # Initialization
-    X = df_data[[B]]
-    y = df_data[A]
-    df_spreads = pd.DataFrame(columns=['Alpha', 'Beta', 'Spread'], index=df_data.index)
-    # Compute spreads
-    lr_model = LinearRegression()
-    lr_model.fit(X, y)
-    df_spreads['Alpha'] = lr_model.intercept_
-    df_spreads['Beta'] = lr_model.coef_[0]
-    df_spreads['Spread'] = y - lr_model.predict(X)
-    # Normalization ==> we refer to normalized spreads as spreads
-    df_spreads['Spread'] = df_spreads['Spread'] / df_spreads['Spread'].std(ddof=0)
-    return df_spreads
-
-
 def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     # Initialization
     df_PT_insample = pd.DataFrame()
@@ -288,8 +276,15 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     df_PT_insample['PriceB'] = df_data[B]
 
     # Spreads
-    df_spreads = tab_spreads(df_data=df_data, A=A, B=B)
-    df_PT_insample = pd.concat([df_PT_insample, df_spreads], axis=1)
+    X = df_PT_insample[['PriceB']]
+    y = df_PT_insample['PriceA']
+    lr_model = LinearRegression()
+    lr_model.fit(X, y)
+    df_PT_insample['Alpha'] = lr_model.intercept_
+    df_PT_insample['Beta'] = lr_model.coef_[0]
+    df_PT_insample['Spread'] = y - lr_model.predict(X)
+    # Normalization ==> we refer to normalized spreads as spreads
+    df_PT_insample['Spread'] = df_PT_insample['Spread'] / df_PT_insample['Spread'].std(ddof=0)
 
     # Signals
     df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
@@ -344,7 +339,7 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
             df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
             df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and (df_PT_insample.loc[curr, 'Sig2 Close'] or df_PT_insample.loc[curr, 'Sig2 Stop']))
 
-    # Close open positions at end of time window
+    # Close open positions @t=T
     curr = df_PT_insample.index[-1]
     if df_PT_insample.loc[curr, 'Pos1 Active']:
         df_PT_insample.loc[curr, 'Pos1 Close'] = True
@@ -476,25 +471,88 @@ def do_PT_accounting(df_PT, W, L):
     # Return output
     return df_PT
 
-"""
-def tab_PT_outsample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None, window_size=500, step_size=20, check_coint=False):
+
+def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop_level=None, sample_size=500, pred_size=20, test_coint=False):
     # Initialization
     df_PT_outsample = pd.DataFrame()
     df_PT_outsample['PriceA'] = df_data[A]
     df_PT_outsample['PriceB'] = df_data[B]
+    # Methodology: we use log returns
+    df_PT_outsample['ReturnA'] = np.log(df_PT_outsample['PriceA']) - np.log(df_PT_outsample['PriceA'].shift(1))
+    df_PT_outsample['ReturnB'] = np.log(df_PT_outsample['PriceB']) - np.log(df_PT_outsample['PriceB'].shift(1))
 
     # Rolling windows
-    ls_windows = [(range(0, window_size), range(window_size, window_size+step_size))]
-    while 
-    print(range())
-    print(df_PT_outsample.iloc[range(1,2)])
-    ls_windows = []
-print(range(0, 19)[-1])
-"""
+    sample_start = 0
+    sample_stop = sample_start + sample_size
+    pred_start = sample_stop
+    pred_stop = pred_start + pred_size
+    ls_windows = [(range(sample_start, sample_stop), range(pred_start, pred_stop))]
+
+    while pred_stop < len(df_PT_outsample.index):
+        sample_start += 20
+        sample_stop += 20
+        pred_start += 20
+        pred_stop = pred_start
+        while (pred_stop < len(df_PT_outsample.index)) and (len(range(pred_start, pred_stop)) < pred_size):
+            pred_stop += 1
+        ls_windows.append((range(sample_start, sample_stop), range(pred_start, pred_stop)))
+
+    # Rolling correlations
+    df_PT_outsample['Corr Prices'] = np.nan
+    df_PT_outsample['Corr Returns'] = np.nan
+    for window in ls_windows:
+        df_sample = df_PT_outsample.iloc[window[0]]
+        df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Corr Prices')] = df_sample['PriceA'].corr(df_sample['PriceB'])
+        df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Corr Returns')] = df_sample['ReturnA'].corr(df_sample['ReturnB'])
+
+    # Spreads
+    df_PT_outsample['Alpha'] = np.nan
+    df_PT_outsample['Beta'] = np.nan
+    df_PT_outsample['Spread'] = np.nan
+    for window in ls_windows:
+        # Fit on sample
+        df_sample = df_PT_outsample.iloc[window[0]]
+        X = df_sample[['PriceB']]
+        y = df_sample['PriceA']
+        lr_model = LinearRegression()
+        lr_model.fit(X, y)
+        df_sample['Spread'] = y - lr_model.predict(X)
+        # Extend on pred
+        df_pred = df_PT_outsample.iloc[window[1]]
+        X = df_pred[['PriceB']]
+        y = df_pred['PriceA']
+        df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Alpha')] = lr_model.intercept_
+        df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Beta')] = lr_model.coef_[0]
+        # Normalization ==> use standard deviation estimated on estimation period (sample)
+        df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Spread')] = (y - lr_model.predict(X)) / df_sample['Spread'].std(ddof=0)
+
+    # Test cointegration
+    if test_coint:
+        df_data_ln = fn.log_transform_cols(df=df_data, cols=l_adj_close_price)
+        df_PT_outsample['Coint TS'] = np.nan
+        df_PT_outsample['Coint PV'] = np.nan
+        for window in ls_windows:
+            df_sample = df_data_ln.iloc[window[0]]
+            df_coint = fn.cointegration(df=df_sample[[A, B]], column_names=[A, B], permut=False)
+            tstat = df_coint.iloc[0, df_coint.columns.get_loc('DF_TS')]
+            df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Coint TS')] = tstat
+            df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Coint PV')] = fn.get_pvalue(distribution=df_ts_coint, value=tstat)
+
+    # Signals
+    # Positions @t=0
+    # Positions @t>=1
+    # Close open positions @t=T
+    # Format as
+    # Accounting
+    # Return output
+    return df_PT_outsample
 
 
-df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close')
+df_test = tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, test_coint=True)
 print(df_test)
+
+
+
 # *** Question 3.5 ***
 
 
