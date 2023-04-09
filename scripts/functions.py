@@ -275,17 +275,7 @@ def simulate_coint_cv(T, N):
 # *** Branch: Anis                               ***
 # **************************************************
 
-def tab_spreads(df_data, A, B):
-    # Compute spreads
-    X = df_data[[B]]
-    y = df_data[A]
-    lr_model = LinearRegression()
-    lr_model.fit(X, y)
-    s_spreads = y - lr_model.predict(X)
-    # Normalization ==> we refer to normalized spreads as spreads
-    s_spreads = s_spreads / s_spreads.std(ddof=0)
-    s_spreads = s_spreads.rename('Spread')
-    return s_spreads
+
 
 
 def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):

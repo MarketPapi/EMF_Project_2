@@ -8,6 +8,7 @@ import scripts.functions as fn
 import warnings
 
 # Packages for testing functions (DELETE LATER)
+from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
 from tqdm import tqdm
@@ -264,14 +265,31 @@ Implication: ???
 
 # *** Question 3.4 ***
 
+def tab_spreads(df_data, A, B):
+    # Initialization
+    X = df_data[[B]]
+    y = df_data[A]
+    df_spreads = pd.DataFrame(columns=['Alpha', 'Beta', 'Spread'], index=df_data.index)
+    # Compute spreads
+    lr_model = LinearRegression()
+    lr_model.fit(X, y)
+    df_spreads['Alpha'] = lr_model.intercept_
+    df_spreads['Beta'] = lr_model.coef_[0]
+    df_spreads['Spread'] = y - lr_model.predict(X)
+    # Normalization ==> we refer to normalized spreads as spreads
+    df_spreads['Spread'] = df_spreads['Spread'] / df_spreads['Spread'].std(ddof=0)
+    return df_spreads
+
 
 def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
-    # Assumption: sig1 open @t=0 and sig1 close @t=1 ==> open position at close t=0, and close position at close t=1
     # Initialization
     df_PT_insample = pd.DataFrame()
     df_PT_insample['PriceA'] = df_data[A]
     df_PT_insample['PriceB'] = df_data[B]
-    df_PT_insample['Spread'] = fn.tab_spreads(df_data=df_data, A=A, B=B)
+
+    # Spreads
+    df_spreads = tab_spreads(df_data=df_data, A=A, B=B)
+    df_PT_insample = pd.concat([df_PT_insample, df_spreads], axis=1)
 
     # Signals
     df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
@@ -335,18 +353,20 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
         df_PT_insample.loc[curr, 'Pos2 Close'] = True
 
     # Format as numpy.bool
-    for col in df_PT_insample.columns[3:]:
+    for col in df_PT_insample.columns[5:]:
         df_PT_insample[col] = df_PT_insample[col].astype('bool')
 
-    # TODO: Accounting
+    # Accounting
+    df_PT_insample = do_PT_accounting(df_PT=df_PT_insample, W=W, L=L)
+
+    # Return output
     return df_PT_insample
 
 
-def execute_trades(df_PT, W, L):
+def do_PT_accounting(df_PT, W, L):
     # Initialization
     df_PT = df_PT.copy()
     curr = df_PT.index[0]
-    IM = 1 / (1 + L)
     df_PT.loc[curr, 'SizeA'] = 0
     df_PT.loc[curr, 'SizeB'] = 0
     df_PT.loc[curr, 'Cash'] = W
@@ -354,8 +374,6 @@ def execute_trades(df_PT, W, L):
     df_PT.loc[curr, 'Long Securities'] = 0
     df_PT.loc[curr, 'Short Securities'] = 0
     df_PT.loc[curr, 'Equity'] = W
-    df_PT.loc[curr, 'Total Assets'] = np.sum([df_PT.loc[curr, col] for col in ['Cash', 'Margin Account', 'Long Securities']])
-    df_PT.loc[curr, 'Total Liabilities'] = np.sum([df_PT.loc[curr, col] for col in ['Short Securities', 'Equity']])
     ls_cols = ['SizeA', 'SizeB', 'Cash', 'Margin Account', 'Long Securities', 'Short Securities', 'Equity', 'Total Assets', 'Total Liabilities']
 
     # Accounting
@@ -372,8 +390,8 @@ def execute_trades(df_PT, W, L):
             # Open position
             if df_PT.loc[curr, 'Pos1 Open']:
                 # Deposit on margin account
-                df_PT.loc[curr, 'Cash'] -= IM * df_PT.loc[curr, 'Equity']
-                df_PT.loc[curr, 'Margin Account'] += IM * df_PT.loc[curr, 'Equity']
+                df_PT.loc[curr, 'Cash'] -= df_PT.loc[curr, 'Equity'] * (1 / (1 + L))
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (1 / (1 + L))
                 # Short leg (A)
                 df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
                 df_PT.loc[curr, 'Short Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
@@ -412,8 +430,8 @@ def execute_trades(df_PT, W, L):
             # Open position
             if df_PT.loc[curr, 'Pos2 Open']:
                 # Deposit on margin account
-                df_PT.loc[curr, 'Cash'] -= IM * df_PT.loc[curr, 'Equity']
-                df_PT.loc[curr, 'Margin Account'] += IM * df_PT.loc[curr, 'Equity']
+                df_PT.loc[curr, 'Cash'] -= df_PT.loc[curr, 'Equity'] * (1 / (1 + L))
+                df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (1 / (1 + L))
                 # Short leg (B)
                 df_PT.loc[curr, 'Margin Account'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
                 df_PT.loc[curr, 'Short Securities'] += df_PT.loc[curr, 'Equity'] * (L / (1 + L))
@@ -452,16 +470,31 @@ def execute_trades(df_PT, W, L):
         df_PT.loc[curr, 'Total Liabilities'] = np.sum([df_PT.loc[curr, col] for col in ['Short Securities', 'Equity']])
 
     # Rounding
-    """
     for col in ls_cols:
         df_PT[col] = df_PT[col].round(2)
-    """
 
     # Return output
     return df_PT
 
-df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', stop_level=1.75)
-df_test = execute_trades(df_PT=df_test, W=1000, L=2)
+"""
+def tab_PT_outsample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None, window_size=500, step_size=20, check_coint=False):
+    # Initialization
+    df_PT_outsample = pd.DataFrame()
+    df_PT_outsample['PriceA'] = df_data[A]
+    df_PT_outsample['PriceB'] = df_data[B]
+
+    # Rolling windows
+    ls_windows = [(range(0, window_size), range(window_size, window_size+step_size))]
+    while 
+    print(range())
+    print(df_PT_outsample.iloc[range(1,2)])
+    ls_windows = []
+print(range(0, 19)[-1])
+"""
+
+
+df_test = tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close')
+print(df_test)
 # *** Question 3.5 ***
 
 
