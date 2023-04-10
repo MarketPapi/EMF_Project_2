@@ -118,10 +118,6 @@ DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 t_stat_coint = fn.simulate_coint_cv(T, N=N)
 df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
 
-# Second simulation for later use
-t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=N)
-df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
-
 # Compute critical values
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
@@ -206,6 +202,10 @@ df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.c
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 
+# Simulating distribution
+t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=10000)
+df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
+
 # %%
 # **************************************************
 # *** QUESTION 3.1: Trading Signal               ***
@@ -275,8 +275,9 @@ Implication: ???
 
 # *** Question 3.4 ***
 df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=None)
-# *** Question 3.5 ***
 
+# *** Question 3.5 ***
+df_PT_insample2 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=20, in_level=1.5, stop_level=None)
 
 # %%
 # **************************************************
@@ -284,8 +285,9 @@ df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Ad
 # **************************************************
 
 # *** Question 3.6 ***
-# *** Question 3.7 ***
 
+# *** Question 3.7 ***
+df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=2.75)
 
 # %%
 # **************************************************
@@ -293,9 +295,10 @@ df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Ad
 # **************************************************
 
 # *** Question 3.8/9/10 ***
+df_PT_outsample1 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=None)
 
 # *** Question 3.11/12 ***
-
+df_PT_outsample2 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=0.1)
 
 
 # %%
