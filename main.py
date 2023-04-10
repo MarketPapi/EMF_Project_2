@@ -224,7 +224,13 @@ Strategy: z_t >> 0 (spread >> 0) ==> short A, long B; z_t << 0 (spread << 0) ==>
 # *** Question 3.2 ***
 # Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
 # Concept: we will use spreads to create trading signals
-s_spreads = fn.tab_spreads(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close')
+X = df_data[['ZC Adj Close']]
+y = df_data['ZW Adj Close']
+lr_model = LinearRegression()
+lr_model.fit(X, y)
+s_spreads = y - lr_model.predict(X)
+# Normalization ==> we refer to normalized spreads as spreads
+s_spreads = s_spreads / s_spreads.std(ddof=0)
 
 # Plot spreads
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -268,14 +274,7 @@ Implication: ???
 # **************************************************
 
 # *** Question 3.4 ***
-
-
-
-df_test = tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, stop_level=1.75, sig_coint=0.1)
-print(df_test)
-
-
-
+df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=None)
 # *** Question 3.5 ***
 
 
@@ -293,12 +292,10 @@ print(df_test)
 # *** QUESTION 3.3: Out-of-Sample Pair Trading   ***
 # **************************************************
 
-# *** Question 3.8 ***
-# *** Question 3.9 ***
-# *** Question 3.10 ***
-# *** Question 3.11 ***
-# *** Question 3.12 ***
-# *** Question 3.13 ***
+# *** Question 3.8/9/10 ***
+
+# *** Question 3.11/12 ***
+
 
 
 # %%
