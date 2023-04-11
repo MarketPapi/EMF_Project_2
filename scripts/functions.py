@@ -328,7 +328,7 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     df_PT_insample['PriceA'] = df_data[A]
     df_PT_insample['PriceB'] = df_data[B]
 
-    # Spreads
+    # Spread
     X = df_PT_insample[['PriceB']]
     y = df_PT_insample['PriceA']
     lr_model = LinearRegression()
@@ -336,7 +336,7 @@ def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
     df_PT_insample['Alpha'] = lr_model.intercept_
     df_PT_insample['Beta'] = lr_model.coef_[0]
     df_PT_insample['Spread'] = y - lr_model.predict(X)
-    # Normalization ==> we refer to normalized spreads as spreads
+    # Normalization ==> we refer to normalized spread as spread
     df_PT_insample['Spread'] = df_PT_insample['Spread'] / df_PT_insample['Spread'].std(ddof=0)
 
     # Signals
@@ -564,7 +564,7 @@ def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop
         df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Corr Prices')] = df_sample['PriceA'].corr(df_sample['PriceB'])
         df_PT_outsample.iloc[window[1], df_PT_outsample.columns.get_loc('Corr Returns')] = df_sample['ReturnA'].corr(df_sample['ReturnB'])
 
-    # Spreads
+    # Spread
     df_PT_outsample['Alpha'] = np.nan
     df_PT_outsample['Beta'] = np.nan
     df_PT_outsample['Spread'] = np.nan

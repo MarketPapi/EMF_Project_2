@@ -209,7 +209,7 @@ df_data = fn.read_data(file_path=Path.joinpath(paths.get('data'), 'commodities.c
 l_adj_close_price = ['ZC Adj Close', 'ZW Adj Close', 'ZS Adj Close', 'KC Adj Close', 'CC Adj Close']
 df_data = df_data[l_adj_close_price]
 
-# Simulating distribution
+# Simulating distribution (cointegration)
 t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=10000)
 df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
 
@@ -219,30 +219,19 @@ df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
 # *** QUESTION 3.1: Trading Signal               ***
 # **************************************************
 
-# *** Question 3.1 ***
-"""
-Model: P_t^{A} = a + b*P_t^{B} + z_t
-Conclusion: as long as cointegration relation holds, we should expect z_t = 0, i.e. no spread
-Arbitrage: z_t >> 0 ==> P_t^{A} - (a + b*P_t^{B}) >> 0 we have that the price of A is significantly above the cointegrated
-price of A ==> we expect P_t^{A} to back to the cointegrated price, so we short A and use the proceeds to long B, and we
-make a profit as long as the two prices converge back to cointegrated price
-Strategy: z_t >> 0 (spread >> 0) ==> short A, long B; z_t << 0 (spread << 0) ==> short B, long A
-"""
-
 # *** Question 3.2 ***
 # Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
-# Concept: we will use spreads to create trading signals
+# Concept: we will use spread to create trading signals
 X = df_data[['ZC Adj Close']]
 y = df_data['ZW Adj Close']
 lr_model = LinearRegression()
 lr_model.fit(X, y)
-s_spreads = y - lr_model.predict(X)
-# Normalization ==> we refer to normalized spreads as spreads
-s_spreads = s_spreads / s_spreads.std(ddof=0)
+s_spread = y - lr_model.predict(X)
+s_spread = s_spread / s_spread.std(ddof=0)
 
-# Plot spreads
+# Plot spread
 fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(s_spreads.index), s_spreads, label='Spread', c='red')
+ax.plot(pd.to_datetime(s_spread.index), s_spread, label='Spread', c='red')
 year_locator = mdates.YearLocator()
 year_formatter = mdates.DateFormatter('%Y')
 ax.xaxis.set_major_locator(year_locator)
@@ -251,16 +240,15 @@ ax.set_title('Wheat-Corn Pair')
 ax.legend()
 plt.show()
 fig.autofmt_xdate()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spreads.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spread.png'))
 plt.close()
 
 # *** Question 3.3 ***
-# Autocorrelogram of spreads
-fn.plot_autocorrelogram(s_data=s_spreads,
-                        outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spreads.png'))
+# Autocorrelogram of spread
+fn.plot_autocorrelogram(s_data=s_spread, outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spread.png'))
 
 # Ljung-Box test with p=10 lags
-fn.Ljung_Box_test(s_data=s_spreads)
+fn.Ljung_Box_test(s_data=s_spread)
 
 """
 Observation: both autocorrelogram and Ljung-Box test indicate that spread process z_t^{tilde} is autocorrelated ==>
@@ -310,6 +298,22 @@ df_PT_outsample1 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC 
 
 # *** Question 3.11/12 ***
 df_PT_outsample2 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=0.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # %%
