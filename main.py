@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import scripts.functions as fn
 import warnings
+import seaborn as sns
 
 # Packages for testing functions (DELETE LATER)
 from sklearn.linear_model import LinearRegression
@@ -230,16 +231,27 @@ s_spread = y - lr_model.predict(X)
 s_spread = s_spread / s_spread.std(ddof=0)
 
 # Plot spread
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(s_spread.index), s_spread, label='Spread', c='red')
-year_locator = mdates.YearLocator()
-year_formatter = mdates.DateFormatter('%Y')
-ax.xaxis.set_major_locator(year_locator)
-ax.xaxis.set_major_formatter(year_formatter)
-ax.set_title('Wheat-Corn Pair')
-ax.legend()
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Wheat-Corn Spread \n', size=28)
+ax.axhline(y=0, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(s_spread.index), y=s_spread, label='Spread', color='red', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
 plt.show()
-fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spread.png'))
 plt.close()
 
@@ -249,14 +261,6 @@ fn.plot_autocorrelogram(s_data=s_spread, outfile=Path.joinpath(paths.get('output
 
 # Ljung-Box test with p=10 lags
 fn.Ljung_Box_test(s_data=s_spread)
-
-"""
-Observation: both autocorrelogram and Ljung-Box test indicate that spread process z_t^{tilde} is autocorrelated ==>
-we reject null rho_1 = ... = rho_p = 0 with p=10 lags at virtually any confidence level, and in correlogram we see that
-autocorrelations rho_k for k = 1, ..., 10 are all above the confidence interval @95%, hence rho_k are all significantly
-different from zero
-Implication: ???
-"""
 
 
 # %%
