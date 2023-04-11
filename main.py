@@ -220,9 +220,11 @@ df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
 # *** QUESTION 3.1: Trading Signal               ***
 # **************************************************
 
-# *** Question 3.2 ***
 # Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
 # Concept: we will use spread to create trading signals
+
+# *** Question 3.2 ***
+# Compute spread
 X = df_data[['ZC Adj Close']]
 y = df_data['ZW Adj Close']
 lr_model = LinearRegression()
@@ -235,8 +237,11 @@ sns.set(context='paper', style='ticks', font_scale=1.0)
 fig = plt.figure(figsize=(12, 7), dpi=600)
 ax = fig.add_subplot()
 ax.grid(False)
-ax.set_title(label='Wheat-Corn Spread \n', size=28)
+ax.set_title(label='Wheat-Corn Spread', size=28)
+# Items
 ax.axhline(y=0, color='black', ls='--', lw=1)
+ax.axhline(y=1.5, color='black', ls='--', lw=1)
+ax.axhline(y=-1.5, color='black', ls='--', lw=1)
 sns.lineplot(x=pd.to_datetime(s_spread.index), y=s_spread, label='Spread', color='red', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
@@ -256,8 +261,30 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spread.png'))
 plt.close()
 
 # *** Question 3.3 ***
-# Autocorrelogram of spread
-fn.plot_autocorrelogram(s_data=s_spread, outfile=Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spread.png'))
+# Plot autocorrelogram of spread
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Autocorrelogram Spread', size=28)
+# Items
+df_autocorrelogram = fn.tab_autocorrelogram(s_data=s_spread, alpha=0.05, max_lags=10)
+s_autocorr = df_autocorrelogram['Autocorrelation']
+s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
+s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
+sns.lineplot(x=df_autocorrelogram.index, y=s_autocorr, color='blue', lw=3)
+sns.lineplot(x=df_autocorrelogram.index, y=s_ci_lower, color='red', lw=3)
+sns.lineplot(x=df_autocorrelogram.index, y=s_ci_upper, color='red', lw=3)
+# X-axis settings
+ax.set_xticklabels(labels=['{:.0f}'.format(x) for x in ax.get_xticks()], size=18)
+ax.set_xlabel(xlabel='Lags', size=20)
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='k-Lags Autocorrelation', size=20)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spread.png'))
+plt.close()
 
 # Ljung-Box test with p=10 lags
 fn.Ljung_Box_test(s_data=s_spread)
@@ -275,7 +302,23 @@ fn.Ljung_Box_test(s_data=s_spread)
 # **************************************************
 
 # *** Question 3.4 ***
+# Trading table
 df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=None)
+
+# Report
+
+
+print('Pair Trading In-sample Report (W=1000, L=2, z_in=1.5, z_stop=None)')
+print_PT_report(df_PT=df_PT_insample1)
+
+
+# Plot wealth
+# Plot leverage
+
+
+
+
+
 
 # *** Question 3.5 ***
 df_PT_insample2 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=20, in_level=1.5, stop_level=None)

@@ -285,25 +285,6 @@ def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):
     return df_autocorrelogram
 
 
-def plot_autocorrelogram(s_data, outfile, alpha=0.05, max_lags=10):
-    df_autocorrelogram = tab_autocorrelogram(s_data=s_data, alpha=alpha, max_lags=max_lags)
-    fig, ax = plt.subplots(figsize=(10, 5))
-    s_autocorr = df_autocorrelogram['Autocorrelation']
-    s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index],
-                           index=df_autocorrelogram.index)
-    s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index],
-                           index=df_autocorrelogram.index)
-    ax.plot(df_autocorrelogram.index, s_autocorr, c='blue')
-    ax.plot(df_autocorrelogram.index, s_ci_lower, c='red')
-    ax.plot(df_autocorrelogram.index, s_ci_upper, c='red')
-    ax.set_title('Autocorrelogram {}'.format(s_data.name))
-    ax.set_xlabel('Lags')
-    ax.set_ylabel('k-Lags Autocorrelation')
-    plt.show()
-    fig.savefig(outfile)
-    plt.close()
-
-
 def Ljung_Box_test(s_data, p=10):
     # Null: rho_1 = ... = rho_p = 0
     # Alternative: rho_k != 0 for some k = 1,...,p
@@ -317,101 +298,6 @@ def Ljung_Box_test(s_data, p=10):
     print('Ljung-Box Test Report')
     print('Test stat (Q_p):', Q_p.round(2))
     print('P-value:', p_value.round(2))
-
-
-def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
-    # Initialization
-    df_PT_insample = pd.DataFrame()
-    df_PT_insample['PriceA'] = df_data[A]
-    df_PT_insample['PriceB'] = df_data[B]
-
-    # Spread
-    X = df_PT_insample[['PriceB']]
-    y = df_PT_insample['PriceA']
-    lr_model = LinearRegression()
-    lr_model.fit(X, y)
-    df_PT_insample['Alpha'] = lr_model.intercept_
-    df_PT_insample['Beta'] = lr_model.coef_[0]
-    df_PT_insample['Spread'] = y - lr_model.predict(X)
-    # Normalization ==> we refer to normalized spread as spread
-    df_PT_insample['Spread'] = df_PT_insample['Spread'] / df_PT_insample['Spread'].std(ddof=0)
-
-    # Signals
-    df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
-    df_PT_insample['Sig1 Close'] = (df_PT_insample['Spread'] <= 0)
-    if stop_level is not None:
-        df_PT_insample['Sig1 Stop'] = (df_PT_insample['Spread'] > stop_level)
-
-    df_PT_insample['Sig2 Open'] = (df_PT_insample['Spread'] < -in_level)
-    df_PT_insample['Sig2 Close'] = (df_PT_insample['Spread'] >= 0)
-    if stop_level is not None:
-        df_PT_insample['Sig2 Stop'] = (df_PT_insample['Spread'] < -stop_level)
-
-    # Positions @t=0
-    curr = df_PT_insample.index[0]
-    if stop_level is None:
-        # Position1
-        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = df_PT_insample.loc[curr, 'Sig1 Open']
-        df_PT_insample.loc[curr, 'Pos1 Close'] = False
-        # Position2
-        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = df_PT_insample.loc[curr, 'Sig2 Open']
-        df_PT_insample.loc[curr, 'Pos2 Close'] = False
-
-    else:
-        # Position1
-        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = (df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop'])
-        df_PT_insample.loc[curr, 'Pos1 Close'] = False
-        # Position2
-        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = (df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop'])
-        df_PT_insample.loc[curr, 'Pos2 Close'] = False
-
-    # Positions @t>=1
-    for i in range(1, len(df_PT_insample.index)):
-        prev = df_PT_insample.index[i-1]
-        curr = df_PT_insample.index[i]
-        if stop_level is None:
-            # Position1
-            df_PT_insample.loc[curr, 'Pos1 Active'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
-            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or
-                                                     (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
-            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[curr, 'Sig1 Close'])
-            # Position2
-            df_PT_insample.loc[curr, 'Pos2 Active'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
-            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or
-                                                     (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
-            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[curr, 'Sig2 Close'])
-
-        else:
-            # Position1
-            df_PT_insample.loc[curr, 'Pos1 Active'] = ((df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']) or
-                                                       (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
-            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or
-                                                     (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
-            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and (df_PT_insample.loc[curr, 'Sig1 Close'] or df_PT_insample.loc[curr, 'Sig1 Stop']))
-            # Position2
-            df_PT_insample.loc[curr, 'Pos2 Active'] = ((df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']) or
-                                                       (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
-            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or
-                                                     (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
-            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and (df_PT_insample.loc[curr, 'Sig2 Close'] or df_PT_insample.loc[curr, 'Sig2 Stop']))
-
-    # Close open positions @t=T
-    curr = df_PT_insample.index[-1]
-    if df_PT_insample.loc[curr, 'Pos1 Active']:
-        df_PT_insample.loc[curr, 'Pos1 Close'] = True
-
-    if df_PT_insample.loc[curr, 'Pos2 Active']:
-        df_PT_insample.loc[curr, 'Pos2 Close'] = True
-
-    # Format as numpy.bool
-    for col in df_PT_insample.columns[df_PT_insample.columns.get_loc('Sig1 Open'):]:
-        df_PT_insample[col] = df_PT_insample[col].astype('bool')
-
-    # Accounting
-    df_PT_insample = do_PT_accounting(df_PT=df_PT_insample, W=W, L=L)
-
-    # Return output
-    return df_PT_insample
 
 
 def do_PT_accounting(df_PT, W, L):
@@ -526,6 +412,101 @@ def do_PT_accounting(df_PT, W, L):
 
     # Return output
     return df_PT
+
+
+def tab_PT_insample(df_data, A, B, W=1000, L=2, in_level=1.5, stop_level=None):
+    # Initialization
+    df_PT_insample = pd.DataFrame()
+    df_PT_insample['PriceA'] = df_data[A]
+    df_PT_insample['PriceB'] = df_data[B]
+
+    # Spread
+    X = df_PT_insample[['PriceB']]
+    y = df_PT_insample['PriceA']
+    lr_model = LinearRegression()
+    lr_model.fit(X, y)
+    df_PT_insample['Alpha'] = lr_model.intercept_
+    df_PT_insample['Beta'] = lr_model.coef_[0]
+    df_PT_insample['Spread'] = y - lr_model.predict(X)
+    # Normalization ==> we refer to normalized spread as spread
+    df_PT_insample['Spread'] = df_PT_insample['Spread'] / df_PT_insample['Spread'].std(ddof=0)
+
+    # Signals
+    df_PT_insample['Sig1 Open'] = (df_PT_insample['Spread'] > in_level)
+    df_PT_insample['Sig1 Close'] = (df_PT_insample['Spread'] <= 0)
+    if stop_level is not None:
+        df_PT_insample['Sig1 Stop'] = (df_PT_insample['Spread'] > stop_level)
+
+    df_PT_insample['Sig2 Open'] = (df_PT_insample['Spread'] < -in_level)
+    df_PT_insample['Sig2 Close'] = (df_PT_insample['Spread'] >= 0)
+    if stop_level is not None:
+        df_PT_insample['Sig2 Stop'] = (df_PT_insample['Spread'] < -stop_level)
+
+    # Positions @t=0
+    curr = df_PT_insample.index[0]
+    if stop_level is None:
+        # Position1
+        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = df_PT_insample.loc[curr, 'Sig1 Open']
+        df_PT_insample.loc[curr, 'Pos1 Close'] = False
+        # Position2
+        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = df_PT_insample.loc[curr, 'Sig2 Open']
+        df_PT_insample.loc[curr, 'Pos2 Close'] = False
+
+    else:
+        # Position1
+        df_PT_insample.loc[curr, ['Pos1 Active', 'Pos1 Open']] = (df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop'])
+        df_PT_insample.loc[curr, 'Pos1 Close'] = False
+        # Position2
+        df_PT_insample.loc[curr, ['Pos2 Active', 'Pos2 Open']] = (df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop'])
+        df_PT_insample.loc[curr, 'Pos2 Close'] = False
+
+    # Positions @t>=1
+    for i in range(1, len(df_PT_insample.index)):
+        prev = df_PT_insample.index[i-1]
+        curr = df_PT_insample.index[i]
+        if stop_level is None:
+            # Position1
+            df_PT_insample.loc[curr, 'Pos1 Active'] = (df_PT_insample.loc[curr, 'Sig1 Open'] or (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or
+                                                     (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[curr, 'Sig1 Close'])
+            # Position2
+            df_PT_insample.loc[curr, 'Pos2 Active'] = (df_PT_insample.loc[curr, 'Sig2 Open'] or (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or
+                                                     (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[curr, 'Sig2 Close'])
+
+        else:
+            # Position1
+            df_PT_insample.loc[curr, 'Pos1 Active'] = ((df_PT_insample.loc[curr, 'Sig1 Open'] and not df_PT_insample.loc[curr, 'Sig1 Stop']) or
+                                                       (df_PT_insample.loc[prev, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Open'] = ((df_PT_insample.loc[curr, 'Pos1 Active'] and not df_PT_insample.loc[prev, 'Pos1 Active']) or
+                                                     (df_PT_insample.loc[curr, 'Pos1 Active'] and df_PT_insample.loc[prev, 'Pos1 Close']))
+            df_PT_insample.loc[curr, 'Pos1 Close'] = (df_PT_insample.loc[curr, 'Pos1 Active'] and (df_PT_insample.loc[curr, 'Sig1 Close'] or df_PT_insample.loc[curr, 'Sig1 Stop']))
+            # Position2
+            df_PT_insample.loc[curr, 'Pos2 Active'] = ((df_PT_insample.loc[curr, 'Sig2 Open'] and not df_PT_insample.loc[curr, 'Sig2 Stop']) or
+                                                       (df_PT_insample.loc[prev, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Open'] = ((df_PT_insample.loc[curr, 'Pos2 Active'] and not df_PT_insample.loc[prev, 'Pos2 Active']) or
+                                                     (df_PT_insample.loc[curr, 'Pos2 Active'] and df_PT_insample.loc[prev, 'Pos2 Close']))
+            df_PT_insample.loc[curr, 'Pos2 Close'] = (df_PT_insample.loc[curr, 'Pos2 Active'] and (df_PT_insample.loc[curr, 'Sig2 Close'] or df_PT_insample.loc[curr, 'Sig2 Stop']))
+
+    # Close open positions @t=T
+    curr = df_PT_insample.index[-1]
+    if df_PT_insample.loc[curr, 'Pos1 Active']:
+        df_PT_insample.loc[curr, 'Pos1 Close'] = True
+
+    if df_PT_insample.loc[curr, 'Pos2 Active']:
+        df_PT_insample.loc[curr, 'Pos2 Close'] = True
+
+    # Format as numpy.bool
+    for col in df_PT_insample.columns[df_PT_insample.columns.get_loc('Sig1 Open'):]:
+        df_PT_insample[col] = df_PT_insample[col].astype('bool')
+
+    # Accounting
+    df_PT_insample = do_PT_accounting(df_PT=df_PT_insample, W=W, L=L)
+
+    # Return output
+    return df_PT_insample
 
 
 def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop_level=None, sample_size=500, pred_size=20, sig_coint=None):
@@ -719,6 +700,15 @@ def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop
     # Return output
     return df_PT_outsample
 
+
+def print_PT_report(df_PT):
+    print('Profit: \t \t {:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
+    print('Final wealth: \t {:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')]))
+    print('Min wealth: \t {:.2f}'.format(df_PT['Equity'].min()))
+    print('Max wealth: \t {:.2f}'.format(df_PT['Equity'].max()))
+    print('Pos1 trades: \t {}'.format(df_PT['Pos1 Open'].value_counts()[True]))
+    print('Pos2 trades: \t {}'.format(df_PT['Pos2 Open'].value_counts()[True]))
+    print('Total trades: \t {}'.format(df_PT['Pos1 Open'].value_counts()[True] + df_PT['Pos2 Open'].value_counts()[True]))
 
 # %%
 # **************************************************
