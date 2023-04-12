@@ -1,5 +1,6 @@
 # Import packages
 from pathlib import Path
+from scipy.stats import norm
 from scripts.parameters import paths
 from sklearn.linear_model import LinearRegression
 import matplotlib.dates as mdates
@@ -8,6 +9,7 @@ import numpy as np
 import pandas as pd
 import scripts.functions as fn
 import seaborn as sns
+import statsmodels.api as sm
 import warnings
 
 # Packages for testing functions (DELETE LATER)
@@ -438,6 +440,17 @@ plt.close()
 # **************************************************
 
 # *** Question 3.6 ***
+# TODO: check conditional distribution AR(1)
+# Fit AR(1) model with const (drift)
+model = sm.tsa.AutoReg(df_PT_insample1['Spread'], lags=1, trend='c').fit()
+
+# Conditional distribution under stationarity
+mu = model.params[0] / (1 - model.params[1])
+var = model.sigma2 / ((1 - model.params[1]) ** 2)
+
+# Report
+print('\nProb(z_t+1 > z_stop=1.75) = {:.2%}'.format(1 - norm.cdf(x=1.75, loc=mu, scale=np.sqrt(var))))
+print('Prob(z_t+1 > z_stop=2.75) = {:.2%}'.format(1 - norm.cdf(x=2.75, loc=mu, scale=np.sqrt(var))))
 
 # *** Question 3.7 ***
 df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=2.75)
