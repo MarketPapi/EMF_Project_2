@@ -33,7 +33,6 @@ df_data = df_data[l_adj_close_price]
 df_data_ln = fn.log_transform_cols(df_data, l_adj_close_price)
 
 
-# %%
 # **************************************************
 # *** QUESTION 1.1: Critical Values              ***
 # **************************************************
@@ -83,7 +82,6 @@ simulation_2 = fn.critical_value(df_data_ln, column, T=500, N=N)
 critical_values_2 = simulation_2[0]
 
 
-# %%
 # **************************************************
 # *** QUESTION 1.2: Testing Non-Stationarity     ***
 # **************************************************
@@ -115,7 +113,6 @@ DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
 # **************************************************
 
 
-# %%
 # **************************************************
 # *** QUESTION 2.1: Critical Values              ***
 # **************************************************
@@ -145,7 +142,6 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.p
 plt.close()
 
 
-# %%
 # **************************************************
 # *** QUESTION 2.2: Testing for Cointegration    ***
 # **************************************************
@@ -224,7 +220,6 @@ t_stat_coint_500 = fn.simulate_coint_cv(T=500, N=10000)
 df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
 
 
-# %%
 # **************************************************
 # *** QUESTION 3.1: Trading Signal               ***
 # **************************************************
@@ -304,13 +299,11 @@ plt.close()
 fn.Ljung_Box_test(s_data=s_spread)
 
 
-# %%
 # **************************************************
 # *** QUESTION 3.2: In-Sample Pair Trading       ***
 # **************************************************
 
 
-# %%
 # **************************************************
 # *** QUESTION 3.2.1: Direct Strategy            ***
 # **************************************************
@@ -440,7 +433,6 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_Evolution_Leverage.png'))
 plt.close()
 
 
-# %%
 # **************************************************
 # *** QUESTION 3.2.2: Stop Loss                  ***
 # **************************************************
@@ -454,7 +446,7 @@ df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Ad
 print('\nPair Trading Report (IS, W=1000, L=2, z_in=1.5, z_stop=2.75)')
 fn.print_PT_report(df_PT=df_PT_insample3)
 
-# %%
+
 # **************************************************
 # *** QUESTION 3.3: Out-of-Sample Pair Trading   ***
 # **************************************************
@@ -474,8 +466,8 @@ ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Rolling Correlations (OS)', size=28)
 # Items
-sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Prices'], label='Corr Prices', color='blue', lw=3)
-sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Returns'], label='Corr Returns', color='purple', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Prices'], label='Corr Prices', color='green', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Returns'], label='Corr Returns', color='firebrick', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
