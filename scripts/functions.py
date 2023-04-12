@@ -295,7 +295,7 @@ def Ljung_Box_test(s_data, p=10):
         Q_p += (1 / (T - k)) * (rho_k ** 2)
     Q_p = (T * (T + 2)) * Q_p
     p_value = 1 - stats.chi2.cdf(Q_p, p)
-    print('Ljung-Box Test Report')
+    print('\nLjung-Box Test Report')
     print('Test stat (Q_p):', Q_p.round(2))
     print('P-value:', p_value.round(2))
 
@@ -702,13 +702,15 @@ def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop
 
 
 def print_PT_report(df_PT):
-    print('Profit: \t \t {:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
-    print('Final wealth: \t {:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')]))
-    print('Min wealth: \t {:.2f}'.format(df_PT['Equity'].min()))
-    print('Max wealth: \t {:.2f}'.format(df_PT['Equity'].max()))
-    print('Pos1 trades: \t {}'.format(df_PT['Pos1 Open'].value_counts()[True]))
-    print('Pos2 trades: \t {}'.format(df_PT['Pos2 Open'].value_counts()[True]))
-    print('Total trades: \t {}'.format(df_PT['Pos1 Open'].value_counts()[True] + df_PT['Pos2 Open'].value_counts()[True]))
+    print('Profit:\t\t\t{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
+    print('ROE:\t\t\t{:.2%}'.format((df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]) / df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
+    print('Init wealth:\t{:.2f}'.format(df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
+    print('Final wealth:\t{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')]))
+    print('Min wealth:\t\t{:.2f}'.format(df_PT['Equity'].min()))
+    print('Max wealth:\t\t{:.2f}'.format(df_PT['Equity'].max()))
+    print('Pos1 trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum()))
+    print('Pos2 trades:\t{}'.format(df_PT['Pos2 Open'].astype(int).sum()))
+    print('Total trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum()))
 
 # %%
 # **************************************************

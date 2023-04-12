@@ -183,19 +183,28 @@ pB = df_data_ln['ZC Adj Close']
 comb = alpha + beta * pB
 
 # Plot PA and Linear combination
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.plot(pd.to_datetime(pA.index), pA, label='Wheat', c='blue')
-ax.plot(pd.to_datetime(pA.index), comb, label='alpha + beta * Price B (Corn)', c='green')
-year_locator = mdates.YearLocator()
-year_formatter = mdates.DateFormatter('%Y')
-ax.xaxis.set_major_locator(year_locator)
-ax.xaxis.set_major_formatter(year_formatter)
-ax.set_xlabel('Time')
-ax.set_ylabel('Log Price')
-ax.set_title('Wheat-Corn Pair')
-ax.legend()
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Wheat-Corn Pair', size=28)
+# Items
+sns.lineplot(x=pd.to_datetime(pA.index), y=pA, label='Wheat', color='sienna', lw=3)
+sns.lineplot(x=pd.to_datetime(comb.index), y=comb, label='Alpha + Beta * PriceB (Corn)', color='gold', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='Log Price', size=20)
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
 plt.show()
-fig.autofmt_xdate()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
 plt.close()
 
@@ -220,7 +229,7 @@ df_ts_coint_500 = pd.DataFrame(data=t_stat_coint_500, columns=['DF_TS'])
 # *** QUESTION 3.1: Trading Signal               ***
 # **************************************************
 
-# Best (cointegrated) pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
+# Best pair: A=Wheat (ZW Adj Close), B=Corn (ZC Adj Close) ==> reg Corn (X) on Wheat (y)
 # Concept: we will use spread to create trading signals
 
 # *** Question 3.2 ***
@@ -306,22 +315,124 @@ fn.Ljung_Box_test(s_data=s_spread)
 df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=None)
 
 # Report
-
-
-print('Pair Trading In-sample Report (W=1000, L=2, z_in=1.5, z_stop=None)')
-print_PT_report(df_PT=df_PT_insample1)
-
+print('\nPair Trading Report (IS, W=1000, L=2, z_in=1.5, z_stop=None)')
+fn.print_PT_report(df_PT=df_PT_insample1)
 
 # Plot wealth
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Wealth (IS, L=2)', size=28)
+# Items
+ax.axhline(y=df_PT_insample1.iloc[0, df_PT_insample1.columns.get_loc('Equity')], color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=df_PT_insample1['Equity'], label='Wealth', color='blue', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_Evolution_Wealth.png'))
+plt.close()
+
+# TODO: Plot positions (???)
+
 # Plot leverage
-
-
-
-
-
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Leverage (IS, L=2)', size=28)
+# Items
+ax.axhline(y=2, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=(df_PT_insample1['Short Securities'] / df_PT_insample1['Margin Account']).fillna(0), label='Leverage', color='purple', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_Evolution_Leverage.png'))
+plt.close()
 
 # *** Question 3.5 ***
+# Trading table
 df_PT_insample2 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=20, in_level=1.5, stop_level=None)
+
+# Report
+print('\nPair Trading Report (IS, W=1000, L=20, z_in=1.5, z_stop=None)')
+fn.print_PT_report(df_PT=df_PT_insample2)
+
+# Plot wealth
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Wealth (IS, L=20)', size=28)
+# Items
+ax.axhline(y=df_PT_insample2.iloc[0, df_PT_insample2.columns.get_loc('Equity')], color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample2.index), y=df_PT_insample2['Equity'], label='Wealth', color='blue', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_Evolution_Wealth.png'))
+plt.close()
+
+# TODO: Plot positions (???)
+
+# Plot leverage
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Leverage (IS, L=20)', size=28)
+# Items
+ax.axhline(y=20, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample2.index), y=(df_PT_insample2['Short Securities'] / df_PT_insample2['Margin Account']).fillna(0), label='Leverage', color='purple', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_Evolution_Leverage.png'))
+plt.close()
 
 
 # %%
@@ -334,6 +445,9 @@ df_PT_insample2 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Ad
 # *** Question 3.7 ***
 df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=2.75)
 
+# Report
+print('\nPair Trading Report (IS, W=1000, L=2, z_in=1.5, z_stop=2.75)')
+fn.print_PT_report(df_PT=df_PT_insample3)
 
 # %%
 # **************************************************
@@ -341,26 +455,148 @@ df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Ad
 # **************************************************
 
 # *** Question 3.8/9/10 ***
+# Trading table
 df_PT_outsample1 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=None)
 
+# Report
+print('\nPair Trading Report (OS, W=1000, L=2, z_in=1.5, z_stop=2.75, sig_coint=None)')
+fn.print_PT_report(df_PT=df_PT_outsample1)
+
+# Plot correlations
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Rolling Correlations (OS)', size=28)
+# Items
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Prices'], label='Corr Prices', color='blue', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Corr Returns'], label='Corr Returns', color='purple', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='lower left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Alphas.png'))
+plt.close()
+
+# Plot alphas
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Alpha OS vs. IS', size=28)
+# Items
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Alpha'], label='Alpha OS', color='orange', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Alpha'], label='Alpha IS', color='red', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Alphas.png'))
+plt.close()
+
+# Plot betas
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Beta OS vs. IS', size=28)
+# Items
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Beta'], label='Beta OS', color='orange', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Beta'], label='Beta IS', color='red', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Betas.png'))
+plt.close()
+
+# Plot spreads
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Spread OS vs. IS', size=28)
+# Items
+ax.axhline(y=0, color='black', ls='--', lw=1)
+ax.axhline(y=1.5, color='black', ls='--', lw=1)
+ax.axhline(y=-1.5, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Spread'], label='Spread OS', color='orange', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Spread'], label='Spread IS', color='red', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Spreads.png'))
+plt.close()
+
 # *** Question 3.11/12 ***
+# Trading table
 df_PT_outsample2 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=0.1)
 
+# Report
+print('\nPair Trading Report (OS, W=1000, L=2, z_in=1.5, z_stop=2.75, sig_coint=10%)')
+fn.print_PT_report(df_PT=df_PT_outsample2)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Plot p-values (stem plot)
+fig = plt.figure(figsize=(12, 7), dpi=600)
+ax = fig.add_subplot()
+ax.set_title(label='Cointegration P-values (OS)', size=28)
+# Items
+plt.stem(pd.to_datetime(df_PT_insample2.index), df_PT_outsample2['Coint PV'], bottom=0.1)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_Cointegration_PV.png'))
+plt.close()
 
 
 # %%
@@ -473,7 +709,6 @@ for column in l_adj_close_price:
     s2 = (1 / (len(X[:,1]) - 1)) * sum((y - reg_results.params[0] - reg_results.params[1] * X[:,1]) ** 2)
     s2 = (1 / (len(X[:, 1]) - 1)) * sum((reg_results.resid)**2)
     print(s2)
-
 
 for col in l_adj_close_price:
     # White noise array.
