@@ -1,10 +1,8 @@
 # Import packages
 from itertools import permutations
 from scipy import stats
-from scripts.parameters import paths
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -274,14 +272,14 @@ def tab_autocorrelogram(s_data, alpha=0.05, max_lags=10):
     # Assumption: i.i.d. process ==> sqrt(T)*rho_k follows N(0,1) ==> rho_k follows N(0,1/T)
     T = len(s_data)
     std_rho_k = np.sqrt(1 / T)
-    df_autocorrelogram = pd.DataFrame(columns=['Autocorrelation', 'CI @ {:.1%}'.format(1 - alpha)])
+    df_autocorrelogram = pd.DataFrame(columns=['Autocorrelation', 'CI @{:.0%}'.format(1 - alpha)])
     df_autocorrelogram.index.rename('Lags', inplace=True)
     for k in range(1, max_lags + 1):
         rho_k = s_data.autocorr(lag=k)
         crit_val = stats.norm.ppf((1 - alpha / 2), loc=0, scale=std_rho_k)
         conf_int = [-crit_val, crit_val]
         df_autocorrelogram.loc[k, 'Autocorrelation'] = rho_k
-        df_autocorrelogram.loc[k, 'CI @ {:.1%}'.format(1 - alpha)] = conf_int
+        df_autocorrelogram.loc[k, 'CI @{:.0%}'.format(1 - alpha)] = conf_int
     return df_autocorrelogram
 
 
@@ -716,5 +714,3 @@ def print_PT_report(df_PT):
 # **************************************************
 # *** Branch: Florian                            ***
 # **************************************************
-
-

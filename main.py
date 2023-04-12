@@ -1,16 +1,16 @@
 # Import packages
 from pathlib import Path
 from scripts.parameters import paths
+from sklearn.linear_model import LinearRegression
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scripts.functions as fn
-import warnings
 import seaborn as sns
+import warnings
 
 # Packages for testing functions (DELETE LATER)
-from sklearn.linear_model import LinearRegression
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.stattools import adfuller
 from tqdm import tqdm
@@ -199,7 +199,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='Log Price', size=20)
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -260,7 +260,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -270,21 +270,26 @@ fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spread.png'))
 plt.close()
 
 # *** Question 3.3 ***
+# Compute autocorrelogram of spread
+df_autocorrelogram = fn.tab_autocorrelogram(s_data=s_spread, alpha=0.05, max_lags=10)
+
 # Plot autocorrelogram of spread
 sns.set(context='paper', style='ticks', font_scale=1.0)
 fig = plt.figure(figsize=(12, 7), dpi=600)
 ax = fig.add_subplot()
 ax.grid(False)
-ax.set_title(label='Autocorrelogram Spread', size=28)
+ax.set_title(label='Autocorrelogram Spread ({})'.format(df_autocorrelogram.columns[-1]), size=28)
 # Items
-df_autocorrelogram = fn.tab_autocorrelogram(s_data=s_spread, alpha=0.05, max_lags=10)
 s_autocorr = df_autocorrelogram['Autocorrelation']
 s_ci_lower = pd.Series([df_autocorrelogram.iloc[:, -1][i][0] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
 s_ci_upper = pd.Series([df_autocorrelogram.iloc[:, -1][i][1] for i in df_autocorrelogram.index], index=df_autocorrelogram.index)
-sns.lineplot(x=df_autocorrelogram.index, y=s_autocorr, color='blue', lw=3)
-sns.lineplot(x=df_autocorrelogram.index, y=s_ci_lower, color='red', lw=3)
-sns.lineplot(x=df_autocorrelogram.index, y=s_ci_upper, color='red', lw=3)
+ax.axhline(y=0, color='red', lw=3)
+sns.lineplot(x=df_autocorrelogram.index, y=s_autocorr, color='black', lw=3)
+sns.lineplot(x=df_autocorrelogram.index, y=s_ci_lower, color='blue', lw=3)
+sns.lineplot(x=df_autocorrelogram.index, y=s_ci_upper, color='blue', lw=3)
 # X-axis settings
+ax.set_xticks(np.arange(df_autocorrelogram.index[0], df_autocorrelogram.index[-1]+1, 1))
+ax.set_xlim(df_autocorrelogram.index[0], df_autocorrelogram.index[-1])
 ax.set_xticklabels(labels=['{:.0f}'.format(x) for x in ax.get_xticks()], size=18)
 ax.set_xlabel(xlabel='Lags', size=20)
 # Y-axis settings
@@ -425,7 +430,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -505,7 +510,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -531,7 +536,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -560,7 +565,7 @@ ax.xaxis.set_major_locator(date_locator)
 ax.xaxis.set_major_formatter(date_formatter)
 ax.set_xlabel(xlabel='')
 # Y-axis settings
-ax.set_yticklabels(labels=['{:.2f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
@@ -603,8 +608,7 @@ plt.close()
 # **************************************************
 # *** Branch: Florian  Test                      ***
 # **************************************************
-
-
+"""
 T = len(df_data_ln.index)
 N = 10000
 column = 'ZC Adj Close'
@@ -728,3 +732,4 @@ for col in l_adj_close_price:
     # Step 4: Compute the T-Statistic
     df_stat = (phi_hat - 1) / phi_std
     print(df_stat)
+"""
