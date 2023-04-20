@@ -349,8 +349,8 @@ ax.grid(False)
 ax.set_title(label='Evolution of Positions (IS, L=2)', size=28)
 # Items
 ax.axhline(y=0, color='black', ls='--', lw=1)
-sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=df_PT_insample1['Equity'], label='Wealth', color='blue', lw=3)
-
+sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=df_PT_insample1['Long Securities'], label='Long Leg (Asset)', color='green', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=-df_PT_insample1['Short Securities'], label='Short Leg (Liability)', color='red', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
@@ -424,7 +424,32 @@ plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_wealth_is_l20.png'))
 plt.close()
 
-# TODO: Plot positions (???)
+# Plot positions
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 8), dpi=300)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Positions (IS, L=20)', size=28)
+# Items
+ax.axhline(y=0, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample2.index), y=df_PT_insample2['Long Securities'], label='Long Leg (Asset)', color='green', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample2.index), y=-df_PT_insample2['Short Securities'], label='Short Leg (Liability)', color='red', lw=3)
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_positions_is_l20.png'))
+plt.close()
 
 # Plot leverage
 sns.set(context='paper', style='ticks', font_scale=1.0)
