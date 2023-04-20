@@ -46,9 +46,9 @@ ar_params_1 = simulation_1[1]
 # *** Question 1.4 ***
 # Plot the histogram of the Test-Statistic
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+fig, ax = plt.subplots(figsize=(12, 8), dpi=300)
 sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
-ax.set_title('DF Test Statistic Distribution (N={})'.format(N), size=28)
+ax.set_title('DF T-Stat Distribution (N={})'.format(N), size=28)
 ax.tick_params(axis='both', labelsize=18)
 plt.xlabel('Test Statistic', size=20)
 plt.ylabel('Frequency', size=20)
@@ -60,16 +60,16 @@ plt.close()
 # *** Question 1.5 ***
 # Compute the critical values of the DF test
 critical_values_1 = simulation_1[0]
-critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_DF_critical_values.tex'), float_format='%.2f')
+critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_DF_cv.tex'), float_format='%.2f')
 
 # Plot the histogram of the Test-Statistic and Critical Values
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+fig, ax = plt.subplots(figsize=(12, 8), dpi=300)
 sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
 plt.axvline(x=critical_values_1.loc[0.01], label='CV 1%', color='red', lw=3)
 plt.axvline(x=critical_values_1.loc[0.05], label='CV 5%', color='orange', lw=3)
 plt.axvline(x=critical_values_1.loc[0.10], label='CV 10%', color='green', lw=3)
-ax.set_title('DF Test Statistic Distribution (N={})'.format(N), size=28)
+ax.set_title('DF T-Stat Distribution with CV (N={})'.format(N), size=28)
 ax.tick_params(axis='both', labelsize=18)
 plt.xlabel('Test Statistic', size=20)
 plt.ylabel('Frequency', size=20)
@@ -107,7 +107,7 @@ for col in l_adj_close_price:
 
 DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
 DF_Test = fn.format_float(DF_Test)
-DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_test.tex'))
+DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_test_results.tex'))
 
 
 # %%
@@ -128,16 +128,16 @@ df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
-cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_coint_critical_values.tex'), float_format='%.2f')
+cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_coint_cv.tex'), float_format='%.2f')
 
 # Plotting histogram of critical values
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+fig, ax = plt.subplots(figsize=(12, 8), dpi=300)
 sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
 plt.axvline(x=cv_coint.loc[0.01], label='CV 1%', color='red', lw=3)
 plt.axvline(x=cv_coint.loc[0.05], label='CV 5%', color='orange', lw=3)
 plt.axvline(x=cv_coint.loc[0.10], label='CV 10%', color='green', lw=3)
-ax.set_title('Cointegration Test Statistic Distribution (N={})'.format(N), size=28)
+ax.set_title('Cointegration T-Stat Distribution with CV (N={})'.format(N), size=28)
 ax.tick_params(axis='both', labelsize=18)
 plt.xlabel('Test Statistic', size=20)
 plt.ylabel('Frequency', size=20)
@@ -186,7 +186,7 @@ comb = alpha + beta * pB
 
 # Plot PA and Linear combination
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Wheat-Corn Pair', size=28)
@@ -244,7 +244,7 @@ s_spread = s_spread / s_spread.std(ddof=0)
 
 # Plot spread
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Wheat-Corn Spread', size=28)
@@ -276,7 +276,7 @@ df_autocorrelogram = fn.tab_autocorrelogram(s_data=s_spread, alpha=0.05, max_lag
 
 # Plot autocorrelogram of spread
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Autocorrelogram Spread ({})'.format(df_autocorrelogram.columns[-1]), size=28)
@@ -324,7 +324,7 @@ fn.print_PT_report(df_PT=df_PT_insample1)
 
 # Plot wealth
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Evolution of Wealth (IS, L=2)', size=28)
@@ -352,7 +352,7 @@ plt.close()
 
 # Plot leverage
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Evolution of Leverage (IS, L=2)', size=28)
@@ -386,7 +386,7 @@ fn.print_PT_report(df_PT=df_PT_insample2)
 
 # Plot wealth
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Evolution of Wealth (IS, L=20)', size=28)
@@ -414,7 +414,7 @@ plt.close()
 
 # Plot leverage
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Evolution of Leverage (IS, L=20)', size=28)
@@ -477,7 +477,7 @@ fn.print_PT_report(df_PT=df_PT_outsample1)
 
 # Plot correlations
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Rolling Correlations (OS)', size=28)
@@ -503,7 +503,7 @@ plt.close()
 
 # Plot alphas
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Alpha OS vs. IS', size=28)
@@ -529,7 +529,7 @@ plt.close()
 
 # Plot betas
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Beta OS vs. IS', size=28)
@@ -555,7 +555,7 @@ plt.close()
 
 # Plot spreads
 sns.set(context='paper', style='ticks', font_scale=1.0)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.grid(False)
 ax.set_title(label='Spread OS vs. IS', size=28)
@@ -591,7 +591,7 @@ print('\nPair Trading Report (OS, W=1000, L=2, z_in=1.5, z_stop=2.75, sig_coint=
 fn.print_PT_report(df_PT=df_PT_outsample2)
 
 # Plot p-values (stem plot)
-fig = plt.figure(figsize=(12, 7), dpi=600)
+fig = plt.figure(figsize=(12, 8), dpi=300)
 ax = fig.add_subplot()
 ax.set_title(label='Cointegration P-values (OS)', size=28)
 # Items
