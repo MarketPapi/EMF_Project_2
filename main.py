@@ -45,32 +45,38 @@ ar_params_1 = simulation_1[1]
 
 # *** Question 1.4 ***
 # Plot the histogram of the Test-Statistic
-fig, ax = plt.subplots(figsize=(15, 10))
-ax.hist(ar_params_1['DF_TS'], bins=50, edgecolor='black')
-ax.set_title('Test Statistic Distribution for N: ' + str(N))
-plt.xlabel('Test Statistic')
-plt.ylabel('Frequency')
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
+ax.set_title('DF Test Statistic Distribution (N={})'.format(N), size=28)
+ax.tick_params(axis='both', labelsize=18)
+plt.xlabel('Test Statistic', size=20)
+plt.ylabel('Frequency', size=20)
+fig.tight_layout()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_T-Stat Distribution.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q1.4_DF_tstat_dist.png'))
 plt.close()
 
 # *** Question 1.5 ***
 # Compute the critical values of the DF test
 critical_values_1 = simulation_1[0]
-critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_Critical_Values.tex'), float_format='%.2f')
+critical_values_1.to_latex(Path.joinpath(paths.get('output'), 'Q1.5_DF_critical_values.tex'), float_format='%.2f')
 
 # Plot the histogram of the Test-Statistic and Critical Values
-fig, ax = plt.subplots(figsize=(15, 10))
-ax.hist(ar_params_1['DF_TS'], bins=50, edgecolor='black')
-ax.set_title('Test Statistic Distribution for N: ' + str(N))
-plt.xlabel('Test Statistic')
-plt.ylabel('Frequency')
-plt.axvline(x=critical_values_1.loc[0.01], color='r', label='CV 1%')
-plt.axvline(x=critical_values_1.loc[0.05], color='y', label='CV 5%')
-plt.axvline(x=critical_values_1.loc[0.10], color='g', label='CV 10%')
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
+plt.axvline(x=critical_values_1.loc[0.01], label='CV 1%', color='red', lw=3)
+plt.axvline(x=critical_values_1.loc[0.05], label='CV 5%', color='orange', lw=3)
+plt.axvline(x=critical_values_1.loc[0.10], label='CV 10%', color='green', lw=3)
+ax.set_title('DF Test Statistic Distribution (N={})'.format(N), size=28)
+ax.tick_params(axis='both', labelsize=18)
+plt.xlabel('Test Statistic', size=20)
+plt.ylabel('Frequency', size=20)
 plt.legend()
+fig.tight_layout()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q1.5_T-Stat Distribution_CV.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q1.5_DF_tstat_dist_cv.png'))
 plt.close()
 
 # *** Question 1.6 ***
@@ -101,7 +107,7 @@ for col in l_adj_close_price:
 
 DF_Test.columns = ['Corn', 'Wheat', 'Soybean', 'Coffee', 'Cacao']
 DF_Test = fn.format_float(DF_Test)
-DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_Test.tex'))
+DF_Test.to_latex(Path.joinpath(paths.get('output'), 'Q1.7_DF_test.tex'))
 
 
 # %%
@@ -122,20 +128,23 @@ df_ts_coint = pd.DataFrame(data=t_stat_coint, columns=['DF_TS'])
 cv_coint = df_ts_coint['DF_TS'].quantile([0.01, 0.05, 0.1])
 cv_coint = cv_coint.rename('Critical Value')
 # Save as Latex
-cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_Critical_Values_Coint.tex'), float_format='%.2f')
+cv_coint.to_latex(Path.joinpath(paths.get('output'), 'Q2.1_coint_critical_values.tex'), float_format='%.2f')
 
-# Plotting Histogram of critical values.
-fig, ax = plt.subplots(figsize=(15, 10))
-ax.hist(df_ts_coint['DF_TS'], bins=50, edgecolor='black')
-ax.set_title('Test Statistic Distribution for N: ' + str(N))
-plt.xlabel('Test Statistic')
-plt.ylabel('Frequency')
-plt.axvline(x=cv_coint.loc[0.01], color='r', label='CV 1%')
-plt.axvline(x=cv_coint.loc[0.05], color='y', label='CV 5%')
-plt.axvline(x=cv_coint.loc[0.10], color='g', label='CV 10%')
+# Plotting histogram of critical values
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig, ax = plt.subplots(figsize=(15, 10), dpi=300)
+sns.histplot(data=ar_params_1, x='DF_TS', bins=50, edgecolor='black')
+plt.axvline(x=cv_coint.loc[0.01], label='CV 1%', color='red', lw=3)
+plt.axvline(x=cv_coint.loc[0.05], label='CV 5%', color='orange', lw=3)
+plt.axvline(x=cv_coint.loc[0.10], label='CV 10%', color='green', lw=3)
+ax.set_title('Cointegration Test Statistic Distribution (N={})'.format(N), size=28)
+ax.tick_params(axis='both', labelsize=18)
+plt.xlabel('Test Statistic', size=20)
+plt.ylabel('Frequency', size=20)
 plt.legend()
+fig.tight_layout()
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_T-Stat_Distribution_Coint.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q2.1_coint_tstat_dist_cv.png'))
 plt.close()
 
 
@@ -160,13 +169,13 @@ for index in df_coint.index:
     coint_test.loc[index]['Reject H0 10%'] = np.abs(df_coint.loc[index]['DF_TS']) > np.abs(cv_coint.loc[0.1])
 
 coint_test_out = fn.format_float(coint_test)
-coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Coint_Test_Results.tex'))
+coint_test_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_coint_test_results.tex'))
 small_coint_test = coint_test_out[(coint_test_out['Reject H0 1%'] == True) | (coint_test_out['Reject H0 5%'] == True) | (coint_test_out['Reject H0 10%'] == True)]
-small_coint_test.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_Small_Coint_Test_Results.tex'))
+small_coint_test.to_latex(Path.joinpath(paths.get('output'), 'Q2.2_small_coint_test_results.tex'))
 
 # *** Question 2.3 ***
 df_coint_out = fn.format_float(df_coint[['Alpha', 'Beta']])
-df_coint_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.3_A_B_Values.tex'))
+df_coint_out.to_latex(Path.joinpath(paths.get('output'), 'Q2.3_AB_values.tex'))
 
 # *** Question 2.5 ***
 pA = df_data_ln['ZW Adj Close']
@@ -198,7 +207,7 @@ ax.set_ylabel(ylabel='Log Price', size=20)
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_Pair_Plot.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_pair_plot.png'))
 plt.close()
 
 
@@ -258,7 +267,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_Spread.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_spread.png'))
 plt.close()
 
 # *** Question 3.3 ***
@@ -289,7 +298,7 @@ ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18
 ax.set_ylabel(ylabel='k-Lags Autocorrelation', size=20)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.3_Autocorrelogram_Spread.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.3_autocorrelogram_spread.png'))
 plt.close()
 
 # Ljung-Box test with p=10 lags
@@ -336,7 +345,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_Evolution_Wealth.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_wealth.png'))
 plt.close()
 
 # TODO: Plot positions (???)
@@ -364,7 +373,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_Evolution_Leverage.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_leverage.png'))
 plt.close()
 
 # *** Question 3.5 ***
@@ -398,7 +407,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_Evolution_Wealth.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_wealth.png'))
 plt.close()
 
 # TODO: Plot positions (???)
@@ -426,7 +435,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_Evolution_Leverage.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_leverage.png'))
 plt.close()
 
 
@@ -489,7 +498,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='lower left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Alphas.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_rolling_correlations.png'))
 plt.close()
 
 # Plot alphas
@@ -515,7 +524,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Alphas.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_alphas.png'))
 plt.close()
 
 # Plot betas
@@ -541,7 +550,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Betas.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_betas.png'))
 plt.close()
 
 # Plot spreads
@@ -570,7 +579,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_Spreads.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_spreads.png'))
 plt.close()
 
 # *** Question 3.11/12 ***
@@ -599,5 +608,5 @@ ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18
 ax.set_ylabel(ylabel='')
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_Cointegration_PV.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_cointegration_PV.png'))
 plt.close()
