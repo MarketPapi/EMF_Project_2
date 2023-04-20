@@ -699,13 +699,14 @@ def tab_PT_outsample(df_data, A, B, df_ts_coint, W=1000, L=2, in_level=1.5, stop
     return df_PT_outsample
 
 
-def print_PT_report(df_PT):
-    print('Profit:\t\t\t{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
-    print('ROE:\t\t\t{:.2%}'.format((df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]) / df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
-    print('Init wealth:\t{:.2f}'.format(df_PT.iloc[0, df_PT.columns.get_loc('Equity')]))
-    print('Final wealth:\t{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')]))
-    print('Min wealth:\t\t{:.2f}'.format(df_PT['Equity'].min()))
-    print('Max wealth:\t\t{:.2f}'.format(df_PT['Equity'].max()))
-    print('Pos1 trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum()))
-    print('Pos2 trades:\t{}'.format(df_PT['Pos2 Open'].astype(int).sum()))
-    print('Total trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum()))
+def tab_PT_report(df_PT, strategy):
+    df_PT_report = pd.DataFrame(columns=strategy)
+    df_PT_report.loc['Profit'] = ':.2f'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['ROE'] = ':.2%'.format((df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]) / df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Init wealth'] = ':.2f'.format(df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Final wealth'] = ':.2f'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Min wealth'] = ':.2f'.format(df_PT['Equity'].min())
+    df_PT_report.loc['Max wealth'] = ':.2f'.format(df_PT['Equity'].max())
+    df_PT_report.loc['Pos1 trades'] = ':.0f'.format(df_PT['Pos1 Open'].astype(int).sum())
+    df_PT_report.loc['Pos2 trades'] = ':.0f'.format(df_PT['Pos2 Open'].astype(int).sum())
+    df_PT_report.loc['Total trades'] = ':.0f'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum())

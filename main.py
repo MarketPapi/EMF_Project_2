@@ -315,10 +315,6 @@ fn.Ljung_Box_test(s_data=s_spread)
 # Trading table
 df_PT_insample1 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=None)
 
-# Report
-print('\nPair Trading Report (IS, W=1000, L=2, z_in=1.5, z_stop=None)')
-fn.print_PT_report(df_PT=df_PT_insample1)
-
 # Plot wealth
 sns.set(context='paper', style='ticks', font_scale=1.0)
 fig = plt.figure(figsize=(12, 8), dpi=300)
@@ -342,7 +338,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_wealth.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_wealth_is_l2.png'))
 plt.close()
 
 # TODO: Plot positions (???)
@@ -370,16 +366,12 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_leverage.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_leverage_is_l2.png'))
 plt.close()
 
 # *** Question 3.5 ***
 # Trading table
 df_PT_insample2 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=20, in_level=1.5, stop_level=None)
-
-# Report
-print('\nPair Trading Report (IS, W=1000, L=20, z_in=1.5, z_stop=None)')
-fn.print_PT_report(df_PT=df_PT_insample2)
 
 # Plot wealth
 sns.set(context='paper', style='ticks', font_scale=1.0)
@@ -404,7 +396,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_wealth.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_wealth_is_l20.png'))
 plt.close()
 
 # TODO: Plot positions (???)
@@ -432,7 +424,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_leverage.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_leverage_is_l20.png'))
 plt.close()
 
 
@@ -455,10 +447,6 @@ print('Prob(z_t+1 > z_stop=2.75) = {:.2%}'.format(1 - norm.cdf(x=2.75, loc=mu, s
 # *** Question 3.7 ***
 df_PT_insample3 = fn.tab_PT_insample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', W=1000, L=2, in_level=1.5, stop_level=2.75)
 
-# Report
-print('\nPair Trading Report (IS, W=1000, L=2, z_in=1.5, z_stop=2.75)')
-fn.print_PT_report(df_PT=df_PT_insample3)
-
 
 # **************************************************
 # *** QUESTION 3.3: Out-of-Sample Pair Trading   ***
@@ -467,10 +455,6 @@ fn.print_PT_report(df_PT=df_PT_insample3)
 # *** Question 3.8/9/10 ***
 # Trading table
 df_PT_outsample1 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=None)
-
-# Report
-print('\nPair Trading Report (OS, W=1000, L=2, z_in=1.5, z_stop=2.75, sig_coint=None)')
-fn.print_PT_report(df_PT=df_PT_outsample1)
 
 # Plot correlations
 sns.set(context='paper', style='ticks', font_scale=1.0)
@@ -495,7 +479,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='lower left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_rolling_correlations.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_rolling_correlations_os.png'))
 plt.close()
 
 # Plot alphas
@@ -521,7 +505,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_alphas.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_alphas_os.png'))
 plt.close()
 
 # Plot betas
@@ -547,7 +531,7 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_betas.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_betas_os.png'))
 plt.close()
 
 # Plot spreads
@@ -576,16 +560,12 @@ ax.set_ylabel(ylabel='')
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_spreads.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_spreads_os.png'))
 plt.close()
 
 # *** Question 3.11/12 ***
 # Trading table
 df_PT_outsample2 = fn.tab_PT_outsample(df_data=df_data, A='ZW Adj Close', B='ZC Adj Close', df_ts_coint=df_ts_coint_500, W=1000, L=2, in_level=1.5, stop_level=2.75, sample_size=500, pred_size=20, sig_coint=0.1)
-
-# Report
-print('\nPair Trading Report (OS, W=1000, L=2, z_in=1.5, z_stop=2.75, sig_coint=10%)')
-fn.print_PT_report(df_PT=df_PT_outsample2)
 
 # Plot p-values (stem plot)
 fig = plt.figure(figsize=(12, 8), dpi=300)
@@ -605,5 +585,26 @@ ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18
 ax.set_ylabel(ylabel='')
 # Show and save
 plt.show()
-fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_cointegration_PV.png'))
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_cointegration_pv_os.png'))
 plt.close()
+
+# Table reports strategies
+def tab_PT_report(df_PT, strategy):
+    df_PT_report = pd.DataFrame(columns=[strategy])
+    df_PT_report.loc['Profit'] = '{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['ROE'] = '{:.2%}'.format((df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]) / df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Init wealth'] = '{:.2f}'.format(df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Final wealth'] = '{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')])
+    df_PT_report.loc['Min wealth'] = '{:.2f}'.format(df_PT['Equity'].min())
+    df_PT_report.loc['Max wealth'] = '{:.2f}'.format(df_PT['Equity'].max())
+    df_PT_report.loc['Pos1 trades'] = '{:.0f}'.format(df_PT['Pos1 Open'].astype(int).sum())
+    df_PT_report.loc['Pos2 trades'] = '{:.0f}'.format(df_PT['Pos2 Open'].astype(int).sum())
+    df_PT_report.loc['Total trades'] = '{:.0f}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum())
+    return df_PT_report
+
+# Report strategies
+df_PT_reports = pd.concat([tab_PT_report(df_PT=df_PT_insample1, strategy='IS_L=2_zin=1.5'),
+                           tab_PT_report(df_PT=df_PT_insample2, strategy='IS_L=20_zin=1.5'),
+                           tab_PT_report(df_PT=df_PT_insample3, strategy='IS_L=2_zin=1.5_zstop=2.75'),
+                           tab_PT_report(df_PT=df_PT_outsample1, strategy='OS_L=2_zin=1.5_zstop=2.75'),
+                           tab_PT_report(df_PT=df_PT_outsample2, strategy='OS_L=2_zin=1.5_zstop=2.75_coint=10%')], axis=1)
