@@ -12,11 +12,6 @@ import seaborn as sns
 import statsmodels.api as sm
 import warnings
 
-# Packages for testing functions (DELETE LATER)
-from statsmodels.tsa.ar_model import AutoReg
-from statsmodels.tsa.stattools import adfuller
-from tqdm import tqdm
-
 # Suppress warnings
 warnings.filterwarnings('ignore')
 
@@ -440,7 +435,6 @@ plt.close()
 # **************************************************
 
 # *** Question 3.6 ***
-# TODO: check conditional distribution AR(1)
 # Fit AR(1) model with const (drift)
 model = sm.tsa.AutoReg(df_PT_insample1['Spread'], lags=1, trend='c').fit()
 
@@ -607,134 +601,3 @@ ax.set_ylabel(ylabel='')
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_Cointegration_PV.png'))
 plt.close()
-
-
-# %%
-# **************************************************
-# *** Branch: Florian  Test                      ***
-# **************************************************
-"""
-T = len(df_data_ln.index)
-N = 10000
-column = 'ZC Adj Close'
-df = df_data_ln
-
-# Generate white noise
-np.random.seed(23031997)
-white_noise = np.random.normal(0, 1, size=(T, N))
-
-# Output DataFrame
-ar_parameters = pd.DataFrame(columns=['AR_Coeff', 'AR_Coeff_SD', 'DF_TS'])
-
-# Select P(0)
-p0 = df[column][0]
-white_noise[0] = p0
-
-# Aggregate the shocks
-white_noise_agg = white_noise.cumsum(axis=0)
-
-for i in tqdm(range(0, N), desc="Simulating Test Statistics"):
-    # Step 3: Estimate AR(1) Model
-
-
-    ar_model = AutoReg(white_noise_agg[:, i], lags=1, trend='c').fit()
-    phi_hat = ar_model.params[1]
-    phi_std = ar_model.bse[1]
-
-    '''
-    print(phi_hat)
-    print(ar_model.params[0])
-    print(phi_std)
-
-
-    p_t = pd.Series(white_noise_agg[:, i])[1:]
-    p_t_1 = pd.Series(white_noise_agg[:, i]).shift(1)[1:]
-    T_1 = len(p_t)
-    phi_hat_1 = p_t.cov(p_t_1)/p_t_1.var()
-    print(phi_hat_1)
-
-    u = p_t.mean() - phi_hat*p_t_1.mean()
-    print(u)
-
-    #s2 = (1/(T_1-1))*sum((p_t - ar_model.params[0] - phi_hat*p_t_1)**2)
-    s2 = (1/(T_1-1))*sum((ar_model.resid)**2)
-    phi_hat_std_1 = s2/(sum((p_t_1 - p_t_1.mean())**2)**0.5)
-    print(phi_hat_std_1)
-
-
-
-    # Step 4: Compute the T-Statistic
-    df_stat = (phi_hat - 1) / phi_std
-    print(df_stat)
-
-    # Step 4: Compute the T-Statistic
-    df_stat_1 = (phi_hat - 1) / phi_hat_std_1
-    print(df_stat_1)
-
-    '''
-
-    # Step 4: Compute the T-Statistic
-    df_stat = (phi_hat - 1) / phi_std
-
-    ar_parameters.loc[i] = [phi_hat, phi_std, df_stat]
-
-# Computing the critical values
-critical_val = ar_parameters['DF_TS'].quantile([0.01, 0.05, 0.1])
-critical_val = critical_val.rename('Critical Value')
-
-
-for col in l_adj_close_price:
-    t_stat_data = fn.reg(df_data_ln, col, lag=1)
-    print(t_stat_data)
-
-
-import statsmodels.api as sm
-
-
-df = df_data_ln
-lag = 1
-
-for column in l_adj_close_price:
- # New DataFrame
-    new_df = pd.DataFrame(df[column].copy())
-
-    # Creating lagged feature
-    new_df['Lagged'] = new_df[column].shift(lag)
-    new_df.dropna(inplace=True)
-
-    X = new_df['Lagged'].values
-    y = new_df[column].values
-
-    # Run linear regression
-    X = sm.add_constant(X)
-    model = sm.OLS(y, X)
-    reg_results = model.fit()
-    #print(reg_results.params[1])
-    #print(reg_results.bse[1])
-    #print(reg_results.params[0])
-    #print(reg_results.bse[1])
-    # Computing the T-Stat from the regression parameters
-    t_stat_data = (reg_results.params[1] - 1) / reg_results.bse[1]
-    s2 = (1 / (len(X[:,1]) - 1)) * sum((y - reg_results.params[0] - reg_results.params[1] * X[:,1]) ** 2)
-    s2 = (1 / (len(X[:, 1]) - 1)) * sum((reg_results.resid)**2)
-    print(s2)
-
-for col in l_adj_close_price:
-    # White noise array.
-    p_t = pd.Series(df_data_ln[col])[1:]
-    # Lagged White noise array.
-    p_t_1 = pd.Series(df_data_ln[col]).shift(1)[1:]
-    T_1 = len(p_t)
-    # Phi hat calculation
-    phi_hat = p_t.cov(p_t_1) / p_t_1.var()
-
-    # Standard error calculation
-    u = p_t.mean() - phi_hat * p_t_1.mean()
-
-    s2 = (1/(T_1-1))*sum((p_t - u - phi_hat*p_t_1)**2)
-    phi_std = (s2 / (sum((p_t_1 - p_t_1.mean()) ** 2)))** 0.5
-
-    # Step 4: Compute the T-Statistic
-    df_stat = (phi_hat - 1) / phi_std
-    print(df_stat)
-"""

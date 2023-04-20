@@ -709,8 +709,3 @@ def print_PT_report(df_PT):
     print('Pos1 trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum()))
     print('Pos2 trades:\t{}'.format(df_PT['Pos2 Open'].astype(int).sum()))
     print('Total trades:\t{}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum()))
-
-# %%
-# **************************************************
-# *** Branch: Florian                            ***
-# **************************************************
