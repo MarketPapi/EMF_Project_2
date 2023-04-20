@@ -1,12 +1,16 @@
 # Import packages
 from itertools import permutations
+from pathlib import Path
 from scipy import stats
+from scripts.parameters import paths
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import statsmodels.api as sm
-
 
 # %%
 # **************************************************
@@ -711,3 +715,87 @@ def tab_PT_report(df_PT, strategy):
     df_PT_report.loc['Pos2 trades'] = '{:.0f}'.format(df_PT['Pos2 Open'].astype(int).sum())
     df_PT_report.loc['Total trades'] = '{:.0f}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum())
     return df_PT_report
+
+
+def plot_PT_wealth_positions_leverage(df_PT, question, method, L, zstop=None, coint=None):
+    # Plot wealth
+    sns.set(context='paper', style='ticks', font_scale=1.0)
+    fig = plt.figure(figsize=(12, 8), dpi=300)
+    ax = fig.add_subplot()
+    ax.grid(False)
+    ax.set_title(label='Evolution of Wealth ({}, L={}, zstop={}, coint={})'.format(method, L, zstop, coint), size=28)
+    # Items
+    ax.axhline(y=df_PT.iloc[0, df_PT.columns.get_loc('Equity')], color='black', ls='--', lw=1)
+    sns.lineplot(x=pd.to_datetime(df_PT.index), y=df_PT['Equity'], label='Wealth', color='blue', lw=3)
+    # X-axis settings
+    date_locator = mdates.YearLocator()
+    date_formatter = mdates.DateFormatter('%Y')
+    ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+    ax.xaxis.set_major_locator(date_locator)
+    ax.xaxis.set_major_formatter(date_formatter)
+    ax.set_xlabel(xlabel='')
+    # Y-axis settings
+    ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+    ax.set_ylabel(ylabel='')
+    # Legend settings
+    ax.legend(loc='upper left', fontsize=16)
+    # Show and save
+    fig.tight_layout()
+    plt.show()
+    fig.savefig(Path.joinpath(paths.get('output'), 'Q{}_evol_wealth_{}_L={}_zstop={}_coint={}.png'.format(question, method, L, zstop, coint)))
+    plt.close()
+
+    # Plot positions
+    sns.set(context='paper', style='ticks', font_scale=1.0)
+    fig = plt.figure(figsize=(12, 8), dpi=300)
+    ax = fig.add_subplot()
+    ax.grid(False)
+    ax.set_title(label='Evolution of Positions ({}, L={}, zstop={}, coint={})'.format(method, L, zstop, coint), size=28)
+    # Items
+    ax.axhline(y=0, color='black', ls='--', lw=1)
+    sns.lineplot(x=pd.to_datetime(df_PT.index), y=df_PT['Long Securities'], label='Long Leg (Asset)', color='green', lw=3)
+    sns.lineplot(x=pd.to_datetime(df_PT.index), y=-df_PT['Short Securities'], label='Short Leg (Liability)', color='red', lw=3)
+    # X-axis settings
+    date_locator = mdates.YearLocator()
+    date_formatter = mdates.DateFormatter('%Y')
+    ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+    ax.xaxis.set_major_locator(date_locator)
+    ax.xaxis.set_major_formatter(date_formatter)
+    ax.set_xlabel(xlabel='')
+    # Y-axis settings
+    ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+    ax.set_ylabel(ylabel='')
+    # Legend settings
+    ax.legend(loc='upper left', fontsize=16)
+    # Show and save
+    fig.tight_layout()
+    plt.show()
+    fig.savefig(Path.joinpath(paths.get('output'), 'Q{}_evol_positions_{}_L={}_zstop={}_coint={}.png'.format(question, method, L, zstop, coint)))
+    plt.close()
+
+    # Plot leverage
+    sns.set(context='paper', style='ticks', font_scale=1.0)
+    fig = plt.figure(figsize=(12, 8), dpi=300)
+    ax = fig.add_subplot()
+    ax.grid(False)
+    ax.set_title(label='Evolution of Leverage ({}, L={}, zstop={}, coint={})'.format(method, L, zstop, coint), size=28)
+    # Items
+    ax.axhline(y=L, color='black', ls='--', lw=1)
+    sns.lineplot(x=pd.to_datetime(df_PT.index), y=(df_PT['Short Securities'] / df_PT['Margin Account']).fillna(0), label='Leverage', color='purple', lw=3)
+    # X-axis settings
+    date_locator = mdates.YearLocator()
+    date_formatter = mdates.DateFormatter('%Y')
+    ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+    ax.xaxis.set_major_locator(date_locator)
+    ax.xaxis.set_major_formatter(date_formatter)
+    ax.set_xlabel(xlabel='')
+    # Y-axis settings
+    ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+    ax.set_ylabel(ylabel='')
+    # Legend settings
+    ax.legend(loc='upper left', fontsize=16)
+    # Show and save
+    fig.tight_layout()
+    plt.show()
+    fig.savefig(Path.joinpath(paths.get('output'), 'Q{}_evol_leverage_{}_L={}_zstop={}_coint={}.png'.format(question, method, L, zstop, coint)))
+    plt.close()
