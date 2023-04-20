@@ -206,6 +206,7 @@ ax.set_ylabel(ylabel='Log Price', size=20)
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q2.5_WC_pair_plot.png'))
 plt.close()
@@ -266,6 +267,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.2_spread.png'))
 plt.close()
@@ -297,6 +299,7 @@ ax.set_xlabel(xlabel='Lags', size=20)
 ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='k-Lags Autocorrelation', size=20)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.3_autocorrelogram_spread.png'))
 plt.close()
@@ -344,6 +347,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_wealth.png'))
 plt.close()
@@ -372,6 +376,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_leverage.png'))
 plt.close()
@@ -406,6 +411,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_wealth.png'))
 plt.close()
@@ -434,6 +440,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.5_evolution_leverage.png'))
 plt.close()
@@ -497,6 +504,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='lower left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_rolling_correlations.png'))
 plt.close()
@@ -523,6 +531,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_alphas.png'))
 plt.close()
@@ -549,6 +558,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_betas.png'))
 plt.close()
@@ -578,6 +588,7 @@ ax.set_ylabel(ylabel='')
 # Legend settings
 ax.legend(loc='upper left', fontsize=16)
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_spreads.png'))
 plt.close()
@@ -607,6 +618,7 @@ ax.set_xlabel(xlabel='')
 ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
 ax.set_ylabel(ylabel='')
 # Show and save
+fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_cointegration_PV.png'))
 plt.close()
