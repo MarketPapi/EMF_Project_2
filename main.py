@@ -341,7 +341,32 @@ plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_wealth_is_l2.png'))
 plt.close()
 
-# TODO: Plot positions (???)
+# Plot positions
+sns.set(context='paper', style='ticks', font_scale=1.0)
+fig = plt.figure(figsize=(12, 8), dpi=300)
+ax = fig.add_subplot()
+ax.grid(False)
+ax.set_title(label='Evolution of Positions (IS, L=2)', size=28)
+# Items
+ax.axhline(y=0, color='black', ls='--', lw=1)
+sns.lineplot(x=pd.to_datetime(df_PT_insample1.index), y=df_PT_insample1['Equity'], label='Wealth', color='blue', lw=3)
+
+# X-axis settings
+date_locator = mdates.YearLocator()
+date_formatter = mdates.DateFormatter('%Y')
+ax.tick_params(axis='x', labelrotation=0, labelsize=18)
+ax.xaxis.set_major_locator(date_locator)
+ax.xaxis.set_major_formatter(date_formatter)
+ax.set_xlabel(xlabel='')
+# Y-axis settings
+ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+ax.set_ylabel(ylabel='')
+# Legend settings
+ax.legend(loc='upper left', fontsize=16)
+# Show and save
+plt.show()
+fig.savefig(Path.joinpath(paths.get('output'), 'Q3.4_evolution_positions_is_l2.png'))
+plt.close()
 
 # Plot leverage
 sns.set(context='paper', style='ticks', font_scale=1.0)
@@ -588,23 +613,10 @@ plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.11_cointegration_pv_os.png'))
 plt.close()
 
-# Table reports strategies
-def tab_PT_report(df_PT, strategy):
-    df_PT_report = pd.DataFrame(columns=[strategy])
-    df_PT_report.loc['Profit'] = '{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
-    df_PT_report.loc['ROE'] = '{:.2%}'.format((df_PT.iloc[-1, df_PT.columns.get_loc('Equity')] - df_PT.iloc[0, df_PT.columns.get_loc('Equity')]) / df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
-    df_PT_report.loc['Init wealth'] = '{:.2f}'.format(df_PT.iloc[0, df_PT.columns.get_loc('Equity')])
-    df_PT_report.loc['Final wealth'] = '{:.2f}'.format(df_PT.iloc[-1, df_PT.columns.get_loc('Equity')])
-    df_PT_report.loc['Min wealth'] = '{:.2f}'.format(df_PT['Equity'].min())
-    df_PT_report.loc['Max wealth'] = '{:.2f}'.format(df_PT['Equity'].max())
-    df_PT_report.loc['Pos1 trades'] = '{:.0f}'.format(df_PT['Pos1 Open'].astype(int).sum())
-    df_PT_report.loc['Pos2 trades'] = '{:.0f}'.format(df_PT['Pos2 Open'].astype(int).sum())
-    df_PT_report.loc['Total trades'] = '{:.0f}'.format(df_PT['Pos1 Open'].astype(int).sum() + df_PT['Pos2 Open'].astype(int).sum())
-    return df_PT_report
-
-# Report strategies
-df_PT_reports = pd.concat([tab_PT_report(df_PT=df_PT_insample1, strategy='IS_L=2_zin=1.5'),
-                           tab_PT_report(df_PT=df_PT_insample2, strategy='IS_L=20_zin=1.5'),
-                           tab_PT_report(df_PT=df_PT_insample3, strategy='IS_L=2_zin=1.5_zstop=2.75'),
-                           tab_PT_report(df_PT=df_PT_outsample1, strategy='OS_L=2_zin=1.5_zstop=2.75'),
-                           tab_PT_report(df_PT=df_PT_outsample2, strategy='OS_L=2_zin=1.5_zstop=2.75_coint=10%')], axis=1)
+# Table pair trading reports
+df_PT_reports = pd.concat([fn.tab_PT_report(df_PT=df_PT_insample1, strategy='IS_L=2_zin=1.5'),
+                           fn.tab_PT_report(df_PT=df_PT_insample2, strategy='IS_L=20_zin=1.5'),
+                           fn.tab_PT_report(df_PT=df_PT_insample3, strategy='IS_L=2_zin=1.5_zstop=2.75'),
+                           fn.tab_PT_report(df_PT=df_PT_outsample1, strategy='OS_L=2_zin=1.5_zstop=2.75'),
+                           fn.tab_PT_report(df_PT=df_PT_outsample2, strategy='OS_L=2_zin=1.5_zstop=2.75_coint=10%')], axis=1)
+df_PT_reports.to_latex(Path.joinpath(paths.get('output'), 'Q3_PT_reports.tex'))
