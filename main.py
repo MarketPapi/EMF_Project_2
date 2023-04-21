@@ -255,7 +255,7 @@ ax.axhline(y=1.5, color='green', ls='--', lw=2)
 ax.axhline(y=-1.5, color='green', ls='--', lw=2)
 ax.axhline(y=2.75, color='red', ls='--', lw=2)
 ax.axhline(y=-2.75, color='red', ls='--', lw=2)
-sns.lineplot(x=pd.to_datetime(s_spread.index), y=s_spread, label='Spread', color='lightcoral', lw=3)
+sns.lineplot(x=pd.to_datetime(s_spread.index), y=s_spread, label='Spread', color='royalblue', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
@@ -404,7 +404,7 @@ ax.grid(False)
 ax.set_title(label='Alpha OS vs. IS', size=28)
 # Items
 sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Alpha'], label='Alpha OS', color='orange', lw=3)
-sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Alpha'], label='Alpha IS', color='red', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Alpha'], label='Alpha IS', color='royalblue', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
@@ -431,7 +431,7 @@ ax.grid(False)
 ax.set_title(label='Beta OS vs. IS', size=28)
 # Items
 sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Beta'], label='Beta OS', color='orange', lw=3)
-sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Beta'], label='Beta IS', color='red', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Beta'], label='Beta IS', color='royalblue', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
@@ -463,7 +463,7 @@ ax.axhline(y=-1.5, color='green', ls='--', lw=2)
 ax.axhline(y=2.75, color='red', ls='--', lw=2)
 ax.axhline(y=-2.75, color='red', ls='--', lw=2)
 sns.lineplot(x=pd.to_datetime(df_PT_outsample1.index), y=df_PT_outsample1['Spread'], label='Spread OS', color='orange', lw=3)
-sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Spread'], label='Spread IS', color='lightcoral', lw=3)
+sns.lineplot(x=pd.to_datetime(df_PT_insample3.index), y=df_PT_insample3['Spread'], label='Spread IS', color='royalblue', lw=3)
 # X-axis settings
 date_locator = mdates.YearLocator()
 date_formatter = mdates.DateFormatter('%Y')
@@ -481,9 +481,6 @@ fig.tight_layout()
 plt.show()
 fig.savefig(Path.joinpath(paths.get('output'), 'Q3.9_spreads_os.png'))
 plt.close()
-
-
-
 
 # *** Question 3.11/12 ***
 # Trading table
