@@ -725,8 +725,8 @@ def plot_PT_wealth_positions_leverage(df_PT, question, method, L, zstop=None, co
     ax.grid(False)
     ax.set_title(label='Evolution of Wealth ({}, L={}, zstop={}, coint={})'.format(method, L, zstop, coint), size=28)
     # Items
-    ax.axhline(y=df_PT.iloc[0, df_PT.columns.get_loc('Equity')], color='black', ls='--', lw=1)
-    sns.lineplot(x=pd.to_datetime(df_PT.index), y=df_PT['Equity'], label='Wealth', color='blue', lw=3)
+    ax.axhline(y=df_PT.iloc[0, df_PT.columns.get_loc('Equity')], color='black', ls='--', lw=2)
+    sns.lineplot(x=pd.to_datetime(df_PT.index), y=df_PT['Equity'], label='Wealth', color='royalblue', lw=3)
     # X-axis settings
     date_locator = mdates.YearLocator()
     date_formatter = mdates.DateFormatter('%Y')
@@ -780,7 +780,7 @@ def plot_PT_wealth_positions_leverage(df_PT, question, method, L, zstop=None, co
     ax.grid(False)
     ax.set_title(label='Evolution of Leverage ({}, L={}, zstop={}, coint={})'.format(method, L, zstop, coint), size=28)
     # Items
-    ax.axhline(y=L, color='black', ls='--', lw=1)
+    ax.axhline(y=L, color='black', ls='--', lw=2)
     sns.lineplot(x=pd.to_datetime(df_PT.index), y=(df_PT['Short Securities'] / df_PT['Margin Account']).fillna(0), label='Leverage', color='purple', lw=3)
     # X-axis settings
     date_locator = mdates.YearLocator()
@@ -790,7 +790,7 @@ def plot_PT_wealth_positions_leverage(df_PT, question, method, L, zstop=None, co
     ax.xaxis.set_major_formatter(date_formatter)
     ax.set_xlabel(xlabel='')
     # Y-axis settings
-    ax.set_yticklabels(labels=['{:.0f}'.format(y) for y in ax.get_yticks()], size=18)
+    ax.set_yticklabels(labels=['{:.1f}'.format(y) for y in ax.get_yticks()], size=18)
     ax.set_ylabel(ylabel='')
     # Legend settings
     ax.legend(loc='upper left', fontsize=16)
